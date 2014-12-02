@@ -1,7 +1,10 @@
-<j:jelly xmlns:j="jelly:core">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
   <!--
     This jelly script is used for per-project configuration.
 
     See global.jelly for a general discussion about jelly script.
   -->
+  <f:entry title="Enable rollback" field="rollbackEnabled">
+    <f:checkbox />
+  </f:entry>
 </j:jelly>
