@@ -18,27 +18,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by aesanch2 on 10/30/14.
  * Wrapper for git interactions using jGit
+ * @author aesanch2
  */
 public class APMGGit {
+
     private Git git;
     private Repository repository;
-    private List<DiffEntry> diffs;
-    private ArrayList<String> listOfDestructions, listOfPackageContents, listOfUpdates;
+    private ArrayList<String> additions, deletions, modificationsOld, modificationsNew, contents;
     private String prevCommit, curCommit;
 
-    //Constructor
-    public APMGGit(String pathToRepo, String prevCommit, String curCommit) throws Exception{
-        File repoDir = new File(pathToRepo);
-        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        repository = builder.setGitDir(repoDir).readEnvironment().build();
-        git = new Git(repository);
-        this.prevCommit = prevCommit;
-        this.curCommit = curCommit;
-        getDiffs();
-    }
-
+    /**
+     * Creates an APMGGit instance for the initial commit and/or initial build.
+     * @param pathToRepo The path to the git repository.
+     * @param curCommit The current commit.
+     * @throws Exception
+     */
     public APMGGit(String pathToRepo, String curCommit) throws Exception{
         File repoDir = new File(pathToRepo);
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -47,37 +42,83 @@ public class APMGGit {
         this.curCommit = curCommit;
     }
 
-    public ArrayList<String> getListOfUpdates() throws IOException{
-        listOfUpdates = new ArrayList<String>();
-        if(diffs == null){
-            listOfUpdates = getRepoContents();
-            return listOfUpdates;
-        }else{
-            for (DiffEntry diff:diffs){
-                if (diff.getChangeType().toString().equals("ADD") || diff.getChangeType().toString().equals("MODIFY")){
-                    listOfUpdates.add(diff.getNewPath());
-                }
-            }
-        }
-        return listOfUpdates;
+    /**
+     * Creates an APMGGit instance for all other builds.
+     * @param pathToRepo The path to the git repository.
+     * @param prevCommit The previous commit.
+     * @param curCommit The current commit.
+     * @throws Exception
+     */
+    public APMGGit(String pathToRepo, String prevCommit, String curCommit) throws Exception{
+        File repoDir = new File(pathToRepo);
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        repository = builder.setGitDir(repoDir).readEnvironment().build();
+        git = new Git(repository);
+        this.prevCommit = prevCommit;
+        this.curCommit = curCommit;
+        determineChanges();
     }
 
-    public ArrayList<String> getListOfDestructions(){
-        listOfDestructions = new ArrayList<String>();
-        if(diffs == null) {
-            return listOfDestructions;
-        }else{
-            for (DiffEntry diff:diffs){
-                if (diff.getChangeType().toString().equals("DELETE")){
-                    listOfDestructions.add(diff.getOldPath());
-                }
-            }
+    /**
+     * Returns all of the items that were added in the current commit.
+     * @return The ArrayList containing all of the additions in the current commit.
+     * @throws IOException
+     */
+    public ArrayList<String> getAdditions() throws IOException{
+        if (additions == null){
+            additions = new ArrayList<String>();
         }
-        return listOfDestructions;
+        return additions;
     }
 
-    private ArrayList<String> getRepoContents() throws IOException{
-        listOfPackageContents = new ArrayList<String>();
+    /**
+     * Returns all of the items that were deleted in the current commit.
+     * @return The ArrayList containing all of the items that were deleted in the current commit.
+     */
+    public ArrayList<String> getDeletions(){
+        if (deletions == null){
+            deletions = new ArrayList<String>();
+        }
+        return deletions;
+    }
+
+    /**
+     * Returns all of the updated changes in the current commit.
+     * @return The ArrayList containing the items that were modified (new paths) and added to the repository.
+     * @throws IOException
+     */
+    public ArrayList<String> getNewChangeSet() throws IOException{
+        ArrayList<String> newChangeSet = new ArrayList<String>();
+
+        if (prevCommit == null){
+            newChangeSet = getContents();
+        }else{
+            newChangeSet.addAll(additions);
+            newChangeSet.addAll(modificationsNew);
+        }
+
+        return newChangeSet;
+    }
+
+    /**
+     * Returns all of the deleted or modified (old paths) changes in the current commit.
+     * @return ArrayList containing the items that were modified (old paths) and deleted from the repository.
+     */
+    public ArrayList<String> getOldChangeSet(){
+        ArrayList<String> oldChangeSet = new ArrayList<String>();
+        oldChangeSet.addAll(deletions);
+        oldChangeSet.addAll(modificationsOld);
+
+        return oldChangeSet;
+    }
+
+    /**
+     * Replicates ls-tree for the current commit.
+     * @return ArrayList containing the full path for all items in the repository.
+     * @throws IOException
+     */
+    private ArrayList<String> getContents() throws IOException{
+        contents = new ArrayList<String>();
         ObjectId commitId = repository.resolve(curCommit);
         RevWalk revWalk = new RevWalk(repository);
         RevCommit commit = revWalk.parseCommit(commitId);
@@ -92,19 +133,53 @@ public class APMGGit {
             }
             else {
                 String member = treeWalk.getPathString();
-                listOfPackageContents.add(member);
+                contents.add(member);
             }
         }
 
-        return listOfPackageContents;
+        return contents;
     }
 
-    private void getDiffs() throws Exception{
+    /**
+     * Parses the diff between previous commit and current commit and sorts the changes into
+     * lists that correspond to the change made.
+     * @throws Exception
+     */
+    private void determineChanges() throws Exception{
+        deletions = new ArrayList<String>();
+        additions = new ArrayList<String>();
+        modificationsNew = new ArrayList<String>();
+        modificationsOld = new ArrayList<String>();
+
+        for (DiffEntry diff : getDiffs()){
+            if (diff.getChangeType().toString().equals("DELETE")){
+                deletions.add(diff.getOldPath());
+            }else if (diff.getChangeType().toString().equals("ADD")){
+                additions.add(diff.getNewPath());
+            }else if (diff.getChangeType().toString().equals("MODIFY")){
+                modificationsNew.add(diff.getNewPath());
+                modificationsOld.add(diff.getOldPath());
+            }
+        }
+    }
+
+    /**
+     * Returns the diff between two commits.
+     * @return List that contains DiffEntry objects of the changes made between the previous and current commits.
+     * @throws Exception
+     */
+    private List<DiffEntry> getDiffs() throws Exception{
         CanonicalTreeParser previousTree = getTree(prevCommit);
         CanonicalTreeParser newTree = getTree(curCommit);
-        diffs = git.diff().setOldTree(previousTree).setNewTree(newTree).call();
+        return git.diff().setOldTree(previousTree).setNewTree(newTree).call();
     }
 
+    /**
+     * Returns the Canonical Tree Parser  representation of a commit.
+     * @param commit Commit in the repository.
+     * @return CanonicalTreeParser representing the tree for the commit.
+     * @throws IOException
+     */
     private CanonicalTreeParser getTree(String commit) throws IOException{
         CanonicalTreeParser tree = new CanonicalTreeParser();
         ObjectReader reader = repository.newObjectReader();

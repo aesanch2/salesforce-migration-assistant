@@ -23,6 +23,10 @@ public class APMGGitTest {
     private File addition, modification, deletion;
     private String oldSha, newSha, gitDir;
 
+    /**
+     * Before to setup the test.
+     * @throws Exception
+     */
     @Before
     public void setUp() throws Exception{
         //Setup the fake repository
@@ -69,19 +73,27 @@ public class APMGGitTest {
         gitDir = localPath.getPath() + "/.git";
     }
 
+    /**
+     * After to tear down the test.
+     * @throws Exception
+     */
     @After
     public void tearDown() throws Exception{
         repository.close();
     }
 
+    /**
+     * Test the diff capability of the wrapper.
+     * @throws Exception
+     */
     @Test
     public void testDiff() throws Exception {
         ArrayList<String> expectedDelete = new ArrayList<String>();
         expectedDelete.add("src/class/deleteThis");
 
         ArrayList<String> expectedContents = new ArrayList<String>();
-        expectedContents.add("src/pages/modifyThis");
         expectedContents.add("src/triggers/addThis");
+        expectedContents.add("src/pages/modifyThis");
 
         //Get the trees
         ObjectReader reader = repository.newObjectReader();
@@ -94,22 +106,43 @@ public class APMGGitTest {
 
         git = new APMGGit(gitDir, oldSha, newSha);
 
-        ArrayList<String> deletedContents = git.getListOfDestructions();
-        ArrayList<String> newContents = git.getListOfUpdates();
+        ArrayList<String> deletedContents = git.getDeletions();
+        ArrayList<String> newContents = git.getNewChangeSet();
 
         assertEquals(expectedDelete, deletedContents);
         assertEquals(expectedContents, newContents);
     }
 
+    /**
+     * Test the overloaded constructors.
+     * @throws Exception
+     */
     @Test
-    public void testListPackageContents() throws Exception{
+    public void testInitialCommit() throws Exception{
         ArrayList<String> expectedContents = new ArrayList<String>();
         expectedContents.add("src/pages/modifyThis");
         expectedContents.add("src/triggers/addThis");
 
         git = new APMGGit(gitDir, newSha);
 
-        ArrayList<String> contents = git.getListOfUpdates();
+        ArrayList<String> contents = git.getNewChangeSet();
+
+        assertEquals(expectedContents, contents);
+    }
+
+    /**
+     * Test the rollback capability.
+     * @throws Exception
+     */
+    @Test
+    public void testRollback() throws Exception{
+        ArrayList<String> expectedContents = new ArrayList<String>();
+        expectedContents.add("src/class/deleteThis");
+        expectedContents.add("src/pages/modifyThis");
+
+        git = new APMGGit(gitDir, oldSha, newSha);
+
+        ArrayList<String> contents = git.getOldChangeSet();
 
         assertEquals(expectedContents, contents);
     }
