@@ -11,8 +11,19 @@ import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+/**
+ * Utility class for performing a variety of tasks in APMG.
+ * @author aesanch2
+ */
 public class APMGUtility {
 
+    /**
+     * Copies all necessary files to the deployment stage.
+     * @param members
+     * @param sourceDir
+     * @param destDir
+     * @throws IOException
+     */
     public static void replicateMembers(ArrayList<APMGMetadataObject> members,
                                  String sourceDir, String destDir) throws IOException{
         for(APMGMetadataObject file : members){
@@ -25,6 +36,13 @@ public class APMGUtility {
         }
     }
 
+    /**
+     * Helper method that generates the package manifest files.
+     * @param destructiveChanges
+     * @param changes
+     * @param destination
+     * @return An ArrayList of the APMGMetadataObjects that were included in this commit.
+     */
     public static ArrayList<APMGMetadataObject> generateManifests(ArrayList<String> destructiveChanges,
                                                                   ArrayList<String> changes,
                                                                   String destination){
@@ -40,6 +58,13 @@ public class APMGUtility {
         return members;
     }
 
+    /**
+     * Helper method that generates the rollback package zip file.
+     * @param rollbackDirectory
+     * @param jobName
+     * @param buildNumber
+     * @throws Exception
+     */
     public static void zipRollbackPackage(String rollbackDirectory,
                                           String jobName,
                                           String buildNumber) throws Exception{
@@ -57,6 +82,12 @@ public class APMGUtility {
         fop.close();
     }
 
+    /**
+     * Helper method that aids zipRollbackPackage in recursively creating a zip file from a directory's contents
+     * @param zop
+     * @param srcFile
+     * @throws Exception
+     */
     private static void addDirToArchive(ZipOutputStream zop, File srcFile) throws Exception{
         File[] files = srcFile.listFiles();
 

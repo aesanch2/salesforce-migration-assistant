@@ -22,12 +22,20 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 /**
- * Generates an xml file for the Salesforce deployment
+ * Utility class that generates the package manifest XML file.
+ * @author aesanch2
  */
 public class APMGGenerator {
 
     private static final Logger LOG = Logger.getLogger(APMGGenerator.class.getName());
 
+    /**
+     * Generates an xml file that describes the metadata that is to be deployed in this job.
+     * @param memberList
+     * @param manifestLocation
+     * @param isDestructiveChange
+     * @return The ArrayList of APMGMetadataObjects that are to be deployed in this job.
+     */
     public static ArrayList<APMGMetadataObject> generate(ArrayList<String> memberList,
                                                          String manifestLocation,
                                                          Boolean isDestructiveChange){
@@ -149,24 +157,44 @@ public class APMGGenerator {
         return contents;
     }
 
+    /**
+     * Sub-class for the salesforceMetadata.xml document that contains Salesforce Metadata API information.
+     * @author aesanch2
+     */
     public static final class APMGMetadataXmlDocument {
         private static String pathToResource = "src/main/resources/org/asu/apmg/salesforceMetadata.xml";
         private static Document doc;
 
+        /**
+         * Initializes the Document representation of the salesforceMetadata.xml file
+         * @throws Exception
+         */
         public static void initDocument() throws Exception {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dbBuilder = dbFactory.newDocumentBuilder();
             doc = dbBuilder.parse(pathToResource);
         }
 
+        /**
+         * Returns the path to the salesforceMetadata.xml resource.
+         * @return The path to the salesforceMetadata.xml resource.
+         */
         public static String getPathToResource() {
             return pathToResource;
         }
 
+        /**
+         * Returns the Document object representation of the salesforceMetadata.xml file.
+         * @return The Document object representation of the salesforceMetadata.xml file.
+         */
         public static Document getDoc() {
             return doc;
         }
 
+        /**
+         * Returns the Salesforce Metadata API Version
+         * @return A string representing the API version number.
+         */
         public static String getAPIVersion() {
             String version = null;
 
@@ -186,8 +214,10 @@ public class APMGGenerator {
         }
 
         /**
-         * Use this to read in the api information from the salesforceMetadata.xml file in
-         * the resources directory
+         * Creates an APMGMetadataObject from a string representation of a file's path and filename.
+         * @param filename
+         * @return An APMGMetadataObject representation of a file.
+         * @throws Exception
          */
         public static APMGMetadataObject createMetadataObject(String filename) throws Exception{
             String container = "empty";

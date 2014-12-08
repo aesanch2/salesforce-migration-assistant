@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Wrapper for git interactions using jGit
+ * Wrapper for git interactions using jGit.
  * @author aesanch2
  */
 public class APMGGit {
