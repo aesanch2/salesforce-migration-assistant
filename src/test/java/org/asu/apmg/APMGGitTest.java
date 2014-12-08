@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class APMGGitTest {
 
@@ -167,6 +168,29 @@ public class APMGGitTest {
     public void testGetPrevCommitFiles() throws Exception{
         git = new APMGGit(gitDir, oldSha, newSha);
 
-        String rollbackStage = localPath.getPath() + "/rollback";
+        ArrayList<String> destructiveChanges = git.getAdditions();
+        ArrayList<String> changes = git.getOldChangeSet();
+        String destination = localPath.getPath() + "/rollback";
+
+        ArrayList<APMGMetadataObject> results = APMGUtility.generateManifests(destructiveChanges, changes,
+                destination);
+
+        git.getPrevCommitFiles(results, destination);
+
+        for(APMGMetadataObject result : results){
+            File rollbackVersion = new File(destination + "/" + result.getPath() + result.getFullName());
+            assertTrue(rollbackVersion.exists());
+        }
+    }
+
+    /**
+     * Test the ability to update the package manifest.
+     * @throws Exception
+     */
+    @Test
+    public void testCommitPackageXML() throws Exception{
+        git = new APMGGit(gitDir, oldSha, newSha);
+
+        assertTrue(git.updatePackageXML(localPath.getPath() + "/src/package.xml"));
     }
 }
