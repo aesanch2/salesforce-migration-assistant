@@ -24,11 +24,15 @@ import java.util.Properties;
 public class APMGBuilder extends Builder {
 
     private APMGGit git;
-    private boolean rollbackEnabled;
+    private boolean rollbackEnabled, updatePackageEnabled;
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public APMGBuilder(Boolean rollbackEnabled) { this.rollbackEnabled = rollbackEnabled;  }
+    public APMGBuilder(Boolean rollbackEnabled,
+                       Boolean updatePackageEnabled) {
+        this.rollbackEnabled = rollbackEnabled;
+        this.updatePackageEnabled = updatePackageEnabled;
+    }
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
@@ -84,6 +88,7 @@ public class APMGBuilder extends Builder {
 
             //Generate the manifests
             members = APMGUtility.generateManifests(listOfDestructions, listOfUpdates, deployStage.getPath());
+            listener.getLogger().println("APMG created deployment package.");
 
             //Copy the files to the deployStage
             APMGUtility.replicateMembers(members, workspaceDirectory, deployStage.getPath());
@@ -107,6 +112,14 @@ public class APMGBuilder extends Builder {
                 //Copy the files to the rollbackStage and zip up the rollback stage
                 git.getPrevCommitFiles(rollbackMembers, rollbackDirectory);
                 APMGUtility.zipRollbackPackage(rollbackDirectory, jobName, buildNumber);
+                listener.getLogger().println("APMG created rollback package.");
+            }
+
+            //Check to see if we need to update the repository's package.xml file
+            if(updatePackageEnabled){
+                boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml");
+                if (updateRequired)
+                    listener.getLogger().println("APMG updated repository package.xml file.");
             }
 
             //Store the commit
@@ -156,5 +169,7 @@ public class APMGBuilder extends Builder {
     }
 
     public boolean getRollbackEnabled() { return rollbackEnabled;}
+
+    public boolean getUpdatePackageEnabled() {return updatePackageEnabled; }
 }
 

@@ -1,5 +1,8 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-  <f:entry title="Enable rollback" field="rollbackEnabled">
-    <f:checkbox />
+  <f:entry field="rollbackEnabled">
+    <f:checkbox title="Enable rollback"/>
+  </f:entry>
+  <f:entry field="updatePackageEnabled">
+    <f:checkbox title="Update manifest"/>
   </f:entry>
 </j:jelly>

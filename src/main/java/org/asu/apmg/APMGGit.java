@@ -154,6 +154,25 @@ public class APMGGit {
         revWalk.dispose();
     }
 
+
+    /**
+     * Creates an updated package.xml file and commits it to the repository
+     * @param manifestLocation
+     * @return A boolean value indicating whether an update was required or not.
+     * @throws Exception
+     */
+    public boolean updatePackageXML(String manifestLocation)throws Exception{
+        if (!getAdditions().isEmpty() || !getDeletions().isEmpty()){
+            APMGGenerator.generate(getContents(), manifestLocation, false);
+
+            //Commit the updated package.xml file to the repository
+            git.add().addFilepattern("src/package.xml").call();
+            git.commit().setMessage("Jenkins updated src/package.xml").call();
+
+            return true;
+        }
+        return false;
+    }
     /**
      * Replicates ls-tree for the current commit.
      * @return ArrayList containing the full path for all items in the repository.
