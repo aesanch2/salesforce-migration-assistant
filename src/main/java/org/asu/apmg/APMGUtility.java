@@ -83,7 +83,7 @@ public class APMGUtility {
     }
 
     /**
-     * Helper method that aids zipRollbackPackage in recursively creating a zip file from a directory's contents
+     * Helper method that aids zipRollbackPackage in recursively creating a zip file from a directory's contents.
      * @param zop
      * @param srcFile
      * @throws Exception
