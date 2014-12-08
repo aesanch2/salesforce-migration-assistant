@@ -24,10 +24,11 @@ import java.util.Properties;
 public class APMGBuilder extends Builder {
 
     private APMGGit git;
+    private boolean rollbackEnabled;
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public APMGBuilder() {  }
+    public APMGBuilder(Boolean rollbackEnabled) { this.rollbackEnabled = rollbackEnabled;  }
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
@@ -36,9 +37,7 @@ public class APMGBuilder extends Builder {
         String workspaceDirectory;
         String jobName;
         String buildNumber;
-        String buildURL;
-        ArrayList<String> listOfDestructions;
-        ArrayList<String> listOfUpdates;
+        ArrayList<String> listOfDestructions, listOfUpdates;
         ArrayList<APMGMetadataObject> members;
 
         try{
@@ -49,7 +48,6 @@ public class APMGBuilder extends Builder {
             workspaceDirectory = envVars.get("WORKSPACE");
             jobName = envVars.get("JOB_NAME");
             buildNumber = envVars.get("BUILD_NUMBER");
-            buildURL = envVars.get("BUILD_URL");
 
             //Create a deployment space for this job within the workspace
             File deployStage = new File(workspaceDirectory + "/deployStage");
@@ -62,52 +60,53 @@ public class APMGBuilder extends Builder {
 
 
             //Read this job's property file and setup the appropriate APMGGit wrapper
+            //TODO: Rename the job root when we are ready to release
+            //String jobRoot = "/var/lib/jenkins/jobs/";
             String jobRoot = "/Users/anthony/Documents/IdeaProjects/apmg/work/jobs/";
             File lastSuccess = new File(jobRoot + jobName + "/lastSuccessful/apmgBuilder.properties");
             File newSuccess = new File(jobRoot + jobName + "/builds/" + buildNumber + "/apmgBuilder.properties");
             OutputStream output = new FileOutputStream(newSuccess);
             Properties jobProperties = new Properties();
-            APMGGenerator generator = new APMGGenerator();
             if (lastSuccess.exists() && !lastSuccess.isDirectory()){
                 jobProperties.load(new FileInputStream(lastSuccess));
                 prevCommit = jobProperties.getProperty("LAST_SUCCESSFUL_COMMIT");
-
-                //Interact with Git to get the changes made to the repository
                 git = new APMGGit(pathToRepo, prevCommit, newCommit);
             }
-            //This was the initial commit to the repo or the initial job
+            //This was the initial commit to the repo or the first build
             else{
-                //Interact with Git to get the changes made to the repository
+                prevCommit = null;
                 git = new APMGGit(pathToRepo, newCommit);
             }
 
             //Get our lists
-            listOfDestructions = git.getListOfDestructions();
-            listOfUpdates = git.getListOfUpdates();
+            listOfDestructions = git.getDeletions();
+            listOfUpdates = git.getNewChangeSet();
 
             //Generate the manifests
-            if (!listOfDestructions.isEmpty()) {
-                //Generate the destructiveChanges.xml file
-                String destructiveChanges = deployStage + "/src/destructiveChanges.xml";
-                generator.setDestructiveChange(true);
-                generator.generate(listOfDestructions, destructiveChanges);
-                listener.getLogger().println("Created destructiveChanges.xml");
-            }
-
-            //Generate the package.xml file
-            String packageManifest = deployStage + "/src/package.xml";
-            generator.setDestructiveChange(false);
-            members = generator.generate(listOfUpdates, packageManifest);
-            listener.getLogger().println("Created package.xml");
+            members = APMGUtility.generateManifests(listOfDestructions, listOfUpdates, deployStage.getPath());
 
             //Copy the files to the deployStage
-            for(APMGMetadataObject file : members){
-                File source = new File(workspaceDirectory + "/" + file.getPath() + file.getFullName());
-                File destination = new File(deployStage + "/" + file.getPath());
-                if(!destination.exists()){
-                    destination.mkdirs();
-                }
-                FileUtils.copyFileToDirectory(source, destination);
+            APMGUtility.replicateMembers(members, workspaceDirectory, deployStage.getPath());
+
+            //Check for rollback
+            if (getRollbackEnabled() && prevCommit != null){
+                String rollbackDirectory = newSuccess.getParent() + "/rollback";
+                File rollbackStage = new File(rollbackDirectory);
+                if(rollbackStage.exists()){
+                    FileUtils.deleteDirectory(rollbackStage);
+                }rollbackStage.mkdirs();
+
+                //Get our lists
+                ArrayList<String> listOfOldItems = git.getOldChangeSet();
+                ArrayList<String> listOfAdditions = git.getAdditions();
+
+                //Generate the manifests for the rollback package
+                ArrayList<APMGMetadataObject> rollbackMembers =
+                        APMGUtility.generateManifests(listOfAdditions, listOfOldItems, rollbackDirectory);
+
+                //Copy the files to the rollbackStage and zip up the rollback stage
+                git.getPrevCommitFiles(rollbackMembers, rollbackDirectory);
+                APMGUtility.zipRollbackPackage(rollbackDirectory, jobName, buildNumber);
             }
 
             //Store the commit
@@ -155,5 +154,7 @@ public class APMGBuilder extends Builder {
             return "APMG";
         }
     }
+
+    public boolean getRollbackEnabled() { return rollbackEnabled;}
 }
 
