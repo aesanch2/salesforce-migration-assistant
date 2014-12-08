@@ -1,5 +1,6 @@
 package org.asu.apmg;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -12,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
@@ -20,7 +22,7 @@ public class APMGGitTest {
 
     private Repository repository;
     private APMGGit git;
-    private File addition, modification, deletion;
+    private File addition, modification, deletion, localPath;
     private String oldSha, newSha, gitDir;
 
     /**
@@ -30,7 +32,7 @@ public class APMGGitTest {
     @Before
     public void setUp() throws Exception{
         //Setup the fake repository
-        File localPath = File.createTempFile("TestGitRepository", "");
+        localPath = File.createTempFile("TestGitRepository", "");
         localPath.delete();
         repository = FileRepositoryBuilder.create(new File(localPath, ".git"));
         repository.create();
@@ -44,12 +46,18 @@ public class APMGGitTest {
 
 
         //Add the first collection of files
-        deletion = new File(classesPath, "deleteThis");
-        modification = new File(pagesPath, "modifyThis");
+        deletion = new File(classesPath, "deleteThis.cls");
+        modification = new File(pagesPath, "modifyThis.page");
         deletion.createNewFile();
         modification.createNewFile();
-        new Git(repository).add().addFilepattern("src/class/deleteThis").call();
-        new Git(repository).add().addFilepattern("src/pages/modifyThis").call();
+        PrintWriter print = new PrintWriter(deletion);
+        print.println("This is the deleteThis file contents.");
+        print.close();
+        print = new PrintWriter(modification);
+        print.println("This is the modifyThis file contents.");
+        print.close();
+        new Git(repository).add().addFilepattern("src/class/deleteThis.cls").call();
+        new Git(repository).add().addFilepattern("src/pages/modifyThis.page").call();
 
         //Create the first commit
         RevCommit firstCommit = new Git(repository).commit().setMessage("Add deleteThis and modifyThis").call();
@@ -57,13 +65,16 @@ public class APMGGitTest {
 
 
         //Delete the deletion file, modify the modification file, and add the addition file
-        new Git(repository).rm().addFilepattern("src/class/deleteThis").call();
+        new Git(repository).rm().addFilepattern("src/class/deleteThis.cls").call();
         modification.setExecutable(true);
-        addition = new File(triggersPath, "addThis");
+        addition = new File(triggersPath, "addThis.trigger");
         addition.createNewFile();
-        new Git(repository).add().addFilepattern("src/pages/modifyThis").call();
-        new Git(repository).add().addFilepattern("src/triggers/addThis").call();
-        new Git(repository).add().addFilepattern("src/class/deleteThis").call();
+        print = new PrintWriter(addition);
+        print.println("This is the addThis file contents.");
+        print.close();
+        new Git(repository).add().addFilepattern("src/pages/modifyThis.page").call();
+        new Git(repository).add().addFilepattern("src/triggers/addThis.trigger").call();
+        new Git(repository).add().addFilepattern("src/class/deleteThis.cls").call();
 
         //Create the second commit
         RevCommit secondCommit = new Git(repository).commit().setMessage("Remove deleteThis. Modify " +
@@ -80,6 +91,7 @@ public class APMGGitTest {
     @After
     public void tearDown() throws Exception{
         repository.close();
+        FileUtils.deleteDirectory(localPath);
     }
 
     /**
@@ -89,11 +101,11 @@ public class APMGGitTest {
     @Test
     public void testDiff() throws Exception {
         ArrayList<String> expectedDelete = new ArrayList<String>();
-        expectedDelete.add("src/class/deleteThis");
+        expectedDelete.add("src/class/deleteThis.cls");
 
         ArrayList<String> expectedContents = new ArrayList<String>();
-        expectedContents.add("src/triggers/addThis");
-        expectedContents.add("src/pages/modifyThis");
+        expectedContents.add("src/triggers/addThis.trigger");
+        expectedContents.add("src/pages/modifyThis.page");
 
         //Get the trees
         ObjectReader reader = repository.newObjectReader();
@@ -120,8 +132,8 @@ public class APMGGitTest {
     @Test
     public void testInitialCommit() throws Exception{
         ArrayList<String> expectedContents = new ArrayList<String>();
-        expectedContents.add("src/pages/modifyThis");
-        expectedContents.add("src/triggers/addThis");
+        expectedContents.add("src/pages/modifyThis.page");
+        expectedContents.add("src/triggers/addThis.trigger");
 
         git = new APMGGit(gitDir, newSha);
 
@@ -137,13 +149,24 @@ public class APMGGitTest {
     @Test
     public void testRollback() throws Exception{
         ArrayList<String> expectedContents = new ArrayList<String>();
-        expectedContents.add("src/class/deleteThis");
-        expectedContents.add("src/pages/modifyThis");
+        expectedContents.add("src/class/deleteThis.cls");
+        expectedContents.add("src/pages/modifyThis.page");
 
         git = new APMGGit(gitDir, oldSha, newSha);
 
         ArrayList<String> contents = git.getOldChangeSet();
 
         assertEquals(expectedContents, contents);
+    }
+
+    /**
+     * Test the retrieval of the previous commit's files.
+     * @throws Exception
+     */
+    @Test
+    public void testGetPrevCommitFiles() throws Exception{
+        git = new APMGGit(gitDir, oldSha, newSha);
+
+        String rollbackStage = localPath.getPath() + "/rollback";
     }
 }

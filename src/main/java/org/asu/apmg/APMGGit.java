@@ -3,6 +3,7 @@ package org.asu.apmg;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -11,8 +12,10 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -112,6 +115,45 @@ public class APMGGit {
         return oldChangeSet;
     }
 
+
+    /**
+     * Checks out the previous commit's files that were modified or deleted and copies them to the rollback stage.
+     * @param destDir The location of the rollback stage.
+     * @throws Exception
+     */
+    public void getPrevCommitFiles(ArrayList<APMGMetadataObject> members, String destDir) throws Exception{
+        ObjectId prevCommitId = repository.resolve(prevCommit);
+
+        RevWalk revWalk = new RevWalk(repository);
+        RevCommit commit = revWalk.parseCommit(prevCommitId);
+        RevTree tree = commit.getTree();
+
+        TreeWalk treeWalk = new TreeWalk(repository);
+        treeWalk.addTree(tree);
+        treeWalk.setRecursive(true);
+
+        for(APMGMetadataObject file : members){
+            String fullName = file.getPath() + file.getFullName();
+            treeWalk.setFilter(PathFilter.create(fullName));
+            if(!treeWalk.next()){
+                throw new IllegalStateException("Did not find expected file '" +
+                fullName + "'");
+            }
+            ObjectId objectId = treeWalk.getObjectId(0);
+            ObjectLoader loader = repository.open(objectId);
+
+            File destination = new File(destDir + "/" + file.getPath());
+            if(!destination.exists()){
+                destination.mkdirs();
+            }
+            File copy = new File(destDir + "/" + fullName);
+            FileOutputStream fop = new FileOutputStream(copy);
+            loader.copyTo(fop);
+        }
+
+        revWalk.dispose();
+    }
+
     /**
      * Replicates ls-tree for the current commit.
      * @return ArrayList containing the full path for all items in the repository.
@@ -151,7 +193,8 @@ public class APMGGit {
         modificationsNew = new ArrayList<String>();
         modificationsOld = new ArrayList<String>();
 
-        for (DiffEntry diff : getDiffs()){
+        List<DiffEntry> diffs = getDiffs();
+        for (DiffEntry diff : diffs){
             if (diff.getChangeType().toString().equals("DELETE")){
                 deletions.add(diff.getOldPath());
             }else if (diff.getChangeType().toString().equals("ADD")){
