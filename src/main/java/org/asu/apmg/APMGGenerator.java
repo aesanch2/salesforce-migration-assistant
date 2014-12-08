@@ -25,23 +25,12 @@ import java.util.logging.Logger;
  * Generates an xml file for the Salesforce deployment
  */
 public class APMGGenerator {
-    private boolean destructiveChange;
 
     private static final Logger LOG = Logger.getLogger(APMGGenerator.class.getName());
 
-    public boolean isDestructiveChange() {
-        return destructiveChange;
-    }
-
-    public void setDestructiveChange(boolean flag) {
-        destructiveChange = flag;
-    }
-
-    public APMGGenerator(){
-
-    }
-
-    public ArrayList<APMGMetadataObject> generate(ArrayList<String> memberList, String manifestLocation){
+    public static ArrayList<APMGMetadataObject> generate(ArrayList<String> memberList,
+                                                         String manifestLocation,
+                                                         Boolean isDestructiveChange){
         ArrayList<APMGMetadataObject> contents = new ArrayList<APMGMetadataObject>();
 
         try {
@@ -87,7 +76,7 @@ public class APMGGenerator {
                 LOG.finest("Path is " + metadata.getPath());
 
                 //Check to make sure the metadata can be deleted if this is a destructiveChange
-                if (!metadata.isDestructible() && isDestructiveChange()){
+                if (!metadata.isDestructible() && isDestructiveChange){
                     LOG.warning(metadata.getFullName() + " cannot be deleted via the API");
                 }else{
                     //Query the document to see if the metadataType node already exists for this metadata

@@ -1,5 +1,6 @@
 package org.asu.apmg;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +20,6 @@ public class APMGGeneratorTest {
     
     private String testWorkspacePath;
     private File resultPackage, testWorkspace;
-    private APMGGenerator generator;
 
     @Before
     public void setUp() throws Exception {
@@ -30,13 +30,11 @@ public class APMGGeneratorTest {
         testWorkspacePath = testWorkspace.getPath();
 
         resultPackage = new File(testWorkspace, "testPackage.xml");
-
-        generator = new APMGGenerator();
     }
 
     @After
     public void tearDown() throws Exception{
-        testWorkspace.delete();
+        FileUtils.deleteDirectory(testWorkspace);
     }
 
     @Test
@@ -47,8 +45,7 @@ public class APMGGeneratorTest {
         File testGitDiff = new File("src/test/resources/testDeletes.txt");
         ArrayList<String> testDiffs = read(testGitDiff);
 
-        generator.setDestructiveChange(true);
-        generator.generate(testDiffs, resultPackage.getPath());
+        APMGGenerator.generate(testDiffs, resultPackage.getPath(), true);
 
         ArrayList<String> expectedOutput = read(expectedPackage);
         ArrayList<String> resultOutput = read(resultPackage);
@@ -63,8 +60,7 @@ public class APMGGeneratorTest {
         File testGitDiff = new File("src/test/resources/testAddsMods.txt");
         ArrayList<String> testDiffs = read(testGitDiff);
 
-        generator.setDestructiveChange(false);
-        generator.generate(testDiffs, resultPackage.getPath());
+        APMGGenerator.generate(testDiffs, resultPackage.getPath(), false);
 
         ArrayList<String> expectedOutput = read(expectedPackage);
         ArrayList<String> resultOutput = read(resultPackage);
