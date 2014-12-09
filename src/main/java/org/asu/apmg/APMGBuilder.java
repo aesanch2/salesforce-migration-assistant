@@ -41,6 +41,7 @@ public class APMGBuilder extends Builder {
         String workspaceDirectory;
         String jobName;
         String buildNumber;
+        String jenkinsHome;
         ArrayList<String> listOfDestructions, listOfUpdates;
         ArrayList<APMGMetadataObject> members;
 
@@ -52,6 +53,7 @@ public class APMGBuilder extends Builder {
             workspaceDirectory = envVars.get("WORKSPACE");
             jobName = envVars.get("JOB_NAME");
             buildNumber = envVars.get("BUILD_NUMBER");
+            jenkinsHome = envVars.get("JENKINS_HOME");
 
             //Create a deployment space for this job within the workspace
             File deployStage = new File(workspaceDirectory + "/apmg");
@@ -64,9 +66,7 @@ public class APMGBuilder extends Builder {
 
 
             //Read this job's property file and setup the appropriate APMGGit wrapper
-            //TODO: Rename the job root when we are ready to release
-            //String jobRoot = "/var/lib/jenkins/jobs/";
-            String jobRoot = "/Users/anthony/Documents/IdeaProjects/apmg/work/jobs/";
+            String jobRoot = jenkinsHome + "/jobs/";
             File lastSuccess = new File(jobRoot + jobName + "/lastSuccessful/apmgBuilder.properties");
             File newSuccess = new File(jobRoot + jobName + "/builds/" + buildNumber + "/apmgBuilder.properties");
             OutputStream output = new FileOutputStream(newSuccess);
