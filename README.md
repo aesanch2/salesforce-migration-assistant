@@ -77,17 +77,17 @@ It should be noted that any problems that are traditionally encountered with the
 certain metadata types (e.g. CustomObjects, Profiles, etc.) will not be solved with this tool. My suggestion would be to
 plan the contents of your repository accordingly.
 
-### Required Jenkins Plugins:
+### Required Jenkins Plugins
 * git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 
-### Pre-installation:
+### Pre-installation
 * You should have some kind of Git repository that Jenkins has access to retrieve the supported Salesforce Metadata from.
 
-### Installation:
+### Installation
 * Install the plugin.
 * There are no global configurations to be made with this plugin. All configuration is done on a per project basis.
 
-### Project Configuration:
+### Project Configuration
 * Create a new job.
 * Setup your Git SCM of choice.
 * Add ``APMG`` as a Build step.
