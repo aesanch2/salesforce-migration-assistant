@@ -54,7 +54,7 @@ public class APMGBuilder extends Builder {
             buildNumber = envVars.get("BUILD_NUMBER");
 
             //Create a deployment space for this job within the workspace
-            File deployStage = new File(workspaceDirectory + "/deployStage");
+            File deployStage = new File(workspaceDirectory + "/apmg");
             if(deployStage.exists()){
                 FileUtils.deleteDirectory(deployStage);
             }deployStage.mkdirs();
