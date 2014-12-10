@@ -88,7 +88,7 @@ public class APMGBuilder extends Builder {
 
             //Generate the manifests
             members = APMGUtility.generateManifests(listOfDestructions, listOfUpdates, deployStage.getPath());
-            listener.getLogger().println("APMG created deployment package.");
+            listener.getLogger().println("[APMG] - Created deployment package.");
 
             //Copy the files to the deployStage
             APMGUtility.replicateMembers(members, workspaceDirectory, deployStage.getPath());
@@ -112,14 +112,14 @@ public class APMGBuilder extends Builder {
                 //Copy the files to the rollbackStage and zip up the rollback stage
                 git.getPrevCommitFiles(rollbackMembers, rollbackDirectory);
                 APMGUtility.zipRollbackPackage(rollbackDirectory, jobName, buildNumber);
-                listener.getLogger().println("APMG created rollback package.");
+                listener.getLogger().println("[APMG] - Created rollback package.");
             }
 
             //Check to see if we need to update the repository's package.xml file
             if(updatePackageEnabled){
                 boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml");
                 if (updateRequired)
-                    listener.getLogger().println("APMG updated repository package.xml file.");
+                    listener.getLogger().println("[APMG] - Updated repository package.xml file.");
             }
 
             //Store the commit
