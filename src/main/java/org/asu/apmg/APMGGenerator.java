@@ -162,7 +162,8 @@ public class APMGGenerator {
      * @author aesanch2
      */
     public static final class APMGMetadataXmlDocument {
-        private static String pathToResource = "src/main/resources/org/asu/apmg/salesforceMetadata.xml";
+        private static final ClassLoader loader = APMGGenerator.APMGMetadataXmlDocument.class.getClassLoader();
+        private static String pathToResource = loader.getResource("org/asu/apmg/salesforceMetadata.xml").toString();
         private static Document doc;
 
         /**

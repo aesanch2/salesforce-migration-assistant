@@ -80,8 +80,9 @@ public class APMGGeneratorTest {
 
     @Test
     public void testGetPathToResource() throws Exception {
-        assertEquals("src/main/resources/org/asu/apmg/salesforceMetadata.xml",
-                APMGGenerator.APMGMetadataXmlDocument.getPathToResource());
+        ClassLoader loader = APMGGenerator.APMGMetadataXmlDocument.class.getClassLoader();
+        String expected = loader.getResource("org/asu/apmg/salesforceMetadata.xml").toString();
+        assertEquals(expected, APMGGenerator.APMGMetadataXmlDocument.getPathToResource());
     }
 
     @Test
