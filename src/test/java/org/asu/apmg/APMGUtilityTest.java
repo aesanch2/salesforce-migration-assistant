@@ -172,10 +172,11 @@ public class APMGUtilityTest {
 
         String jobName = "TestJob";
         String buildNumber = "TestBuildNumber";
+        String buildTag = jobName + "-" + buildNumber;
 
-        APMGUtility.zipRollbackPackage(destination, jobName, buildNumber);
+        APMGUtility.zipRollbackPackage(destination, buildTag);
 
-        File zipTest = new File(localPath.getPath() + "/" + jobName + "_" + buildNumber + "_rollback.zip");
+        File zipTest = new File(localPath.getPath() + "/" + buildTag + "-rollback.zip");
         assertTrue(zipTest.exists());
     }
 

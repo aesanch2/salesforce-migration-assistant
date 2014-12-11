@@ -12,11 +12,7 @@ import org.apache.commons.io.FileUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Properties;
 
 /**
  * @author aesanch2
@@ -40,19 +36,21 @@ public class APMGBuilder extends Builder {
         String prevCommit;
         String workspaceDirectory;
         String jobName;
-        String buildNumber;
+        String buildTag;
         String jenkinsHome;
         ArrayList<String> listOfDestructions, listOfUpdates;
         ArrayList<APMGMetadataObject> members;
+        EnvVars envVars;
 
         try{
             //Load our environment variables for the job
-            EnvVars envVars = build.getEnvironment(listener);
+            envVars = build.getEnvironment(listener);
 
             newCommit = envVars.get("GIT_COMMIT");
+            prevCommit = envVars.get("GIT_PREVIOUS_SUCCESSFUL_COMMIT");
             workspaceDirectory = envVars.get("WORKSPACE");
             jobName = envVars.get("JOB_NAME");
-            buildNumber = envVars.get("BUILD_NUMBER");
+            buildTag = envVars.get("BUILD_TAG");
             jenkinsHome = envVars.get("JENKINS_HOME");
 
             //Create a deployment space for this job within the workspace
@@ -61,25 +59,19 @@ public class APMGBuilder extends Builder {
                 FileUtils.deleteDirectory(deployStage);
             }deployStage.mkdirs();
 
+            //Put the deployment stage location into the environment as a variable
+            build.getEnvironment(listener).put("APMG_DIR", deployStage.getPath());
+
             //Set up our repository connection
             String pathToRepo = workspaceDirectory + "/.git";
 
-
-            //Read this job's property file and setup the appropriate APMGGit wrapper
-            String jobRoot = jenkinsHome + "/jobs/";
-            File lastSuccess = new File(jobRoot + jobName + "/lastSuccessful/apmgBuilder.properties");
-            File newSuccess = new File(jobRoot + jobName + "/builds/" + buildNumber + "/apmgBuilder.properties");
-            OutputStream output = new FileOutputStream(newSuccess);
-            Properties jobProperties = new Properties();
-            if (lastSuccess.exists() && !lastSuccess.isDirectory()){
-                jobProperties.load(new FileInputStream(lastSuccess));
-                prevCommit = jobProperties.getProperty("LAST_SUCCESSFUL_COMMIT");
-                git = new APMGGit(pathToRepo, prevCommit, newCommit);
-            }
             //This was the initial commit to the repo or the first build
+            if (prevCommit == null){
+                git = new APMGGit(pathToRepo, prevCommit);
+            }
+            //If we have a previous successful commit from the git plugin
             else{
-                prevCommit = null;
-                git = new APMGGit(pathToRepo, newCommit);
+                git = new APMGGit(pathToRepo, newCommit, newCommit);
             }
 
             //Get our lists
@@ -95,7 +87,7 @@ public class APMGBuilder extends Builder {
 
             //Check for rollback
             if (getRollbackEnabled() && prevCommit != null){
-                String rollbackDirectory = newSuccess.getParent() + "/rollback";
+                String rollbackDirectory = jenkinsHome + "/jobs/" + jobName;
                 File rollbackStage = new File(rollbackDirectory);
                 if(rollbackStage.exists()){
                     FileUtils.deleteDirectory(rollbackStage);
@@ -111,7 +103,8 @@ public class APMGBuilder extends Builder {
 
                 //Copy the files to the rollbackStage and zip up the rollback stage
                 git.getPrevCommitFiles(rollbackMembers, rollbackDirectory);
-                APMGUtility.zipRollbackPackage(rollbackDirectory, jobName, buildNumber);
+                String zipFile = APMGUtility.zipRollbackPackage(rollbackDirectory, buildTag);
+                build.getEnvironment(listener).put("APMG_ROLLBACK", zipFile);
                 listener.getLogger().println("[APMG] - Created rollback package.");
             }
 
@@ -122,9 +115,6 @@ public class APMGBuilder extends Builder {
                     listener.getLogger().println("[APMG] - Updated repository package.xml file.");
             }
 
-            //Store the commit
-            jobProperties.setProperty("LAST_SUCCESSFUL_COMMIT", newCommit);
-            jobProperties.store(output, null);
         }catch(Exception e){
             e.printStackTrace(listener.getLogger());
             return false;

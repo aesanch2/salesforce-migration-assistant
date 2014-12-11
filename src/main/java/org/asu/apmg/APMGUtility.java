@@ -61,14 +61,12 @@ public class APMGUtility {
     /**
      * Helper method that generates the rollback package zip file.
      * @param rollbackDirectory
-     * @param jobName
-     * @param buildNumber
+     * @param buildTag
      * @throws Exception
      */
-    public static void zipRollbackPackage(String rollbackDirectory,
-                                          String jobName,
-                                          String buildNumber) throws Exception{
-        String zipFile = "/"+ FilenameUtils.getPath(rollbackDirectory) + jobName + "_" + buildNumber + "_rollback.zip";
+    public static String zipRollbackPackage(String rollbackDirectory,
+                                          String buildTag) throws Exception{
+        String zipFile = "/"+ FilenameUtils.getPath(rollbackDirectory) + buildTag + "-rollback.zip";
         String srcDir = rollbackDirectory;
 
         FileOutputStream fop = new FileOutputStream(zipFile);
@@ -80,6 +78,8 @@ public class APMGUtility {
 
         zop.close();
         fop.close();
+
+        return zipFile;
     }
 
     /**
