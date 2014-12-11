@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Wrapper for git interactions using jGit.
@@ -30,6 +31,8 @@ public class APMGGit {
     private Repository repository;
     private ArrayList<String> additions, deletions, modificationsOld, modificationsNew, contents;
     private String prevCommit, curCommit;
+
+    private static final Logger LOG = Logger.getLogger(APMGGit.class.getName());
 
     /**
      * Creates an APMGGit instance for the initial commit and/or initial build.
@@ -43,6 +46,7 @@ public class APMGGit {
         repository = builder.setGitDir(repoDir).readEnvironment().build();
         git = new Git(repository);
         this.curCommit = curCommit;
+        additions = getContents();
     }
 
     /**
@@ -161,7 +165,7 @@ public class APMGGit {
      * @return A boolean value indicating whether an update was required or not.
      * @throws Exception
      */
-    public boolean updatePackageXML(String manifestLocation)throws Exception{
+    public boolean updatePackageXML(String manifestLocation) throws Exception{
         if (!getAdditions().isEmpty() || !getDeletions().isEmpty()){
             APMGGenerator.generate(getContents(), manifestLocation, false);
 
@@ -173,6 +177,7 @@ public class APMGGit {
         }
         return false;
     }
+
     /**
      * Replicates ls-tree for the current commit.
      * @return ArrayList containing the full path for all items in the repository.
