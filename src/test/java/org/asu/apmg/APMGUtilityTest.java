@@ -163,7 +163,7 @@ public class APMGUtilityTest {
 
         ArrayList<String> destructiveChanges = git.getAdditions();
         ArrayList<String> changes = git.getOldChangeSet();
-        String destination = localPath.getPath() + "/rollback";
+        String destination = localPath + "/rollback";
 
         ArrayList<APMGMetadataObject> members = APMGUtility.generateManifests(destructiveChanges, changes,
                 destination);
@@ -174,9 +174,10 @@ public class APMGUtilityTest {
         String buildNumber = "TestBuildNumber";
         String buildTag = jobName + "-" + buildNumber;
 
-        APMGUtility.zipRollbackPackage(destination, buildTag);
+        File dest = new File(destination);
+        APMGUtility.zipRollbackPackage(dest, buildTag);
 
-        File zipTest = new File(localPath.getPath() + "/" + buildTag + "-rollback.zip");
+        File zipTest = new File(localPath.getPath() + "/" + buildTag + "-APMGrollback.zip");
         assertTrue(zipTest.exists());
     }
 
