@@ -3,9 +3,7 @@ package org.asu.apmg;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import org.apache.commons.io.FileUtils;
@@ -13,6 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author aesanch2
@@ -20,14 +19,16 @@ import java.util.ArrayList;
 public class APMGBuilder extends Builder {
 
     private APMGGit git;
-    private boolean rollbackEnabled, updatePackageEnabled;
+    private boolean rollbackEnabled, updatePackageEnabled, forceInitialBuild;
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public APMGBuilder(Boolean rollbackEnabled,
-                       Boolean updatePackageEnabled) {
+                       Boolean updatePackageEnabled,
+                       Boolean forceInitialBuild) {
         this.rollbackEnabled = rollbackEnabled;
         this.updatePackageEnabled = updatePackageEnabled;
+        this.forceInitialBuild = forceInitialBuild;
     }
 
     @Override
@@ -37,10 +38,12 @@ public class APMGBuilder extends Builder {
         String workspaceDirectory;
         String jobName;
         String buildTag;
+        String buildNumber;
         String jenkinsHome;
         ArrayList<String> listOfDestructions, listOfUpdates;
         ArrayList<APMGMetadataObject> members;
         EnvVars envVars;
+        List<ParameterValue> parameterValues;
 
         try{
             //Load our environment variables for the job
@@ -51,6 +54,7 @@ public class APMGBuilder extends Builder {
             workspaceDirectory = envVars.get("WORKSPACE");
             jobName = envVars.get("JOB_NAME");
             buildTag = envVars.get("BUILD_TAG");
+            buildNumber = envVars.get("BUILD_NUMBER");
             jenkinsHome = envVars.get("JENKINS_HOME");
 
             //Create a deployment space for this job within the workspace
@@ -60,21 +64,22 @@ public class APMGBuilder extends Builder {
             }deployStage.mkdirs();
 
             //Put the deployment stage location into the environment as a variable
-            build.getEnvironment(listener).put("APMG_DIR", deployStage.getPath());
+            parameterValues = new ArrayList<ParameterValue>();
+            parameterValues.add(new StringParameterValue("APMG_DEPLOY", deployStage.getPath()+"/src"));
 
-            //Set up our repository connection
             String pathToRepo = workspaceDirectory + "/.git";
 
             //This was the initial commit to the repo or the first build
-            if (prevCommit == null){
-                git = new APMGGit(pathToRepo, prevCommit);
+            if (prevCommit == null || getForceInitialBuild()){
+                prevCommit = null;
+                git = new APMGGit(pathToRepo, newCommit);
             }
             //If we have a previous successful commit from the git plugin
             else{
-                git = new APMGGit(pathToRepo, newCommit, newCommit);
+                git = new APMGGit(pathToRepo, newCommit, prevCommit);
             }
 
-            //Get our lists
+            //Get our change sets
             listOfDestructions = git.getDeletions();
             listOfUpdates = git.getNewChangeSet();
 
@@ -87,7 +92,7 @@ public class APMGBuilder extends Builder {
 
             //Check for rollback
             if (getRollbackEnabled() && prevCommit != null){
-                String rollbackDirectory = jenkinsHome + "/jobs/" + jobName;
+                String rollbackDirectory = jenkinsHome + "/jobs/" + jobName + "/builds/" + buildNumber + "/rollback";
                 File rollbackStage = new File(rollbackDirectory);
                 if(rollbackStage.exists()){
                     FileUtils.deleteDirectory(rollbackStage);
@@ -103,18 +108,20 @@ public class APMGBuilder extends Builder {
 
                 //Copy the files to the rollbackStage and zip up the rollback stage
                 git.getPrevCommitFiles(rollbackMembers, rollbackDirectory);
-                String zipFile = APMGUtility.zipRollbackPackage(rollbackDirectory, buildTag);
-                build.getEnvironment(listener).put("APMG_ROLLBACK", zipFile);
+                String zipFile = APMGUtility.zipRollbackPackage(rollbackStage, buildTag);
+                FileUtils.deleteDirectory(rollbackStage);
+                parameterValues.add(new StringParameterValue("APMG_ROLLBACK", zipFile));
                 listener.getLogger().println("[APMG] - Created rollback package.");
             }
 
             //Check to see if we need to update the repository's package.xml file
-            if(updatePackageEnabled){
+            if(getUpdatePackageEnabled()){
                 boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml");
                 if (updateRequired)
                     listener.getLogger().println("[APMG] - Updated repository package.xml file.");
             }
 
+            build.addAction(new ParametersAction(parameterValues));
         }catch(Exception e){
             e.printStackTrace(listener.getLogger());
             return false;
@@ -138,7 +145,7 @@ public class APMGBuilder extends Builder {
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         /**
-         * In order to load the persisted global configuration, you have to 
+         * In order to load the persisted global configuration, you have to
          * call load() in the constructor.
          */
         public DescriptorImpl() {
@@ -146,7 +153,7 @@ public class APMGBuilder extends Builder {
         }
 
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            // Indicates that this builder can be used with all kinds of project types 
+            // Indicates that this builder can be used with all kinds of project types
             return true;
         }
 
@@ -160,6 +167,8 @@ public class APMGBuilder extends Builder {
 
     public boolean getRollbackEnabled() { return rollbackEnabled;}
 
-    public boolean getUpdatePackageEnabled() {return updatePackageEnabled; }
+    public boolean getUpdatePackageEnabled() { return updatePackageEnabled; }
+
+    public boolean getForceInitialBuild() { return forceInitialBuild; }
 }
 

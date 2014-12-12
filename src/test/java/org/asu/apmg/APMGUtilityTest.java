@@ -87,7 +87,7 @@ public class APMGUtilityTest {
 
     @Test
     public void replicateMembersTest() throws Exception{
-        git = new APMGGit(gitDir, oldSha, newSha);
+        git = new APMGGit(gitDir, newSha, oldSha);
 
         ArrayList<String> destructiveChanges = git.getDeletions();
         ArrayList<String> changes = git.getNewChangeSet();
@@ -115,7 +115,7 @@ public class APMGUtilityTest {
         expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/triggers/addThis.trigger"));
         expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/pages/modifyThis.page"));
 
-        git = new APMGGit(gitDir, oldSha, newSha);
+        git = new APMGGit(gitDir, newSha, oldSha);
 
         ArrayList<String> destructiveChanges = git.getDeletions();
         ArrayList<String> changes = git.getNewChangeSet();
@@ -141,7 +141,7 @@ public class APMGUtilityTest {
         expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/classes/deleteThis.cls"));
         expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/pages/modifyThis.page"));
 
-        git = new APMGGit(gitDir, oldSha, newSha);
+        git = new APMGGit(gitDir, newSha, oldSha);
 
         ArrayList<String> destructiveChanges = git.getAdditions();
         ArrayList<String> changes = git.getOldChangeSet();
@@ -159,7 +159,7 @@ public class APMGUtilityTest {
 
     @Test
     public void zipRollbackPackageTest() throws Exception{
-        git = new APMGGit(gitDir, oldSha, newSha);
+        git = new APMGGit(gitDir, newSha, oldSha);
 
         ArrayList<String> destructiveChanges = git.getAdditions();
         ArrayList<String> changes = git.getOldChangeSet();
