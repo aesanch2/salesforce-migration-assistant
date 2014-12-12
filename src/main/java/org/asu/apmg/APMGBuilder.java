@@ -3,9 +3,7 @@ package org.asu.apmg;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import org.apache.commons.io.FileUtils;
@@ -13,6 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author aesanch2
@@ -39,10 +38,12 @@ public class APMGBuilder extends Builder {
         String workspaceDirectory;
         String jobName;
         String buildTag;
+        String buildNumber;
         String jenkinsHome;
         ArrayList<String> listOfDestructions, listOfUpdates;
         ArrayList<APMGMetadataObject> members;
         EnvVars envVars;
+        List<ParameterValue> parameterValues;
 
         try{
             //Load our environment variables for the job
@@ -53,6 +54,7 @@ public class APMGBuilder extends Builder {
             workspaceDirectory = envVars.get("WORKSPACE");
             jobName = envVars.get("JOB_NAME");
             buildTag = envVars.get("BUILD_TAG");
+            buildNumber = envVars.get("BUILD_NUMBER");
             jenkinsHome = envVars.get("JENKINS_HOME");
 
             //Create a deployment space for this job within the workspace
@@ -62,7 +64,8 @@ public class APMGBuilder extends Builder {
             }deployStage.mkdirs();
 
             //Put the deployment stage location into the environment as a variable
-            build.getEnvironment(listener).put("APMG_DEPLOYSTG", deployStage.getPath());
+            parameterValues = new ArrayList<ParameterValue>();
+            parameterValues.add(new StringParameterValue("APMG_DEPLOY", deployStage.getPath()+"/src"));
 
             String pathToRepo = workspaceDirectory + "/.git";
 
@@ -73,7 +76,7 @@ public class APMGBuilder extends Builder {
             }
             //If we have a previous successful commit from the git plugin
             else{
-                git = new APMGGit(pathToRepo, newCommit, newCommit);
+                git = new APMGGit(pathToRepo, newCommit, prevCommit);
             }
 
             //Get our change sets
@@ -89,7 +92,7 @@ public class APMGBuilder extends Builder {
 
             //Check for rollback
             if (getRollbackEnabled() && prevCommit != null){
-                String rollbackDirectory = jenkinsHome + "/jobs/" + jobName;
+                String rollbackDirectory = jenkinsHome + "/jobs/" + jobName + "/builds/" + buildNumber + "/rollback";
                 File rollbackStage = new File(rollbackDirectory);
                 if(rollbackStage.exists()){
                     FileUtils.deleteDirectory(rollbackStage);
@@ -105,8 +108,9 @@ public class APMGBuilder extends Builder {
 
                 //Copy the files to the rollbackStage and zip up the rollback stage
                 git.getPrevCommitFiles(rollbackMembers, rollbackDirectory);
-                String zipFile = APMGUtility.zipRollbackPackage(rollbackDirectory, buildTag);
-                build.getEnvironment(listener).put("APMG_ROLLBACK", zipFile);
+                String zipFile = APMGUtility.zipRollbackPackage(rollbackStage, buildTag);
+                FileUtils.deleteDirectory(rollbackStage);
+                parameterValues.add(new StringParameterValue("APMG_ROLLBACK", zipFile));
                 listener.getLogger().println("[APMG] - Created rollback package.");
             }
 
@@ -117,6 +121,7 @@ public class APMGBuilder extends Builder {
                     listener.getLogger().println("[APMG] - Updated repository package.xml file.");
             }
 
+            build.addAction(new ParametersAction(parameterValues));
         }catch(Exception e){
             e.printStackTrace(listener.getLogger());
             return false;
