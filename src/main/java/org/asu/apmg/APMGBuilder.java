@@ -20,14 +20,16 @@ import java.util.ArrayList;
 public class APMGBuilder extends Builder {
 
     private APMGGit git;
-    private boolean rollbackEnabled, updatePackageEnabled;
+    private boolean rollbackEnabled, updatePackageEnabled, forceInitialBuild;
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public APMGBuilder(Boolean rollbackEnabled,
-                       Boolean updatePackageEnabled) {
+                       Boolean updatePackageEnabled,
+                       Boolean forceInitialBuild) {
         this.rollbackEnabled = rollbackEnabled;
         this.updatePackageEnabled = updatePackageEnabled;
+        this.forceInitialBuild = forceInitialBuild;
     }
 
     @Override
@@ -60,13 +62,13 @@ public class APMGBuilder extends Builder {
             }deployStage.mkdirs();
 
             //Put the deployment stage location into the environment as a variable
-            build.getEnvironment(listener).put("APMG_DIR", deployStage.getPath());
+            build.getEnvironment(listener).put("APMG_DEPLOYSTG", deployStage.getPath());
 
-            //Set up our repository connection
             String pathToRepo = workspaceDirectory + "/.git";
 
             //This was the initial commit to the repo or the first build
-            if (prevCommit == null){
+            if (prevCommit == null || getForceInitialBuild()){
+                prevCommit = null;
                 git = new APMGGit(pathToRepo, prevCommit);
             }
             //If we have a previous successful commit from the git plugin
@@ -74,7 +76,7 @@ public class APMGBuilder extends Builder {
                 git = new APMGGit(pathToRepo, newCommit, newCommit);
             }
 
-            //Get our lists
+            //Get our change sets
             listOfDestructions = git.getDeletions();
             listOfUpdates = git.getNewChangeSet();
 
@@ -109,7 +111,7 @@ public class APMGBuilder extends Builder {
             }
 
             //Check to see if we need to update the repository's package.xml file
-            if(updatePackageEnabled){
+            if(getUpdatePackageEnabled()){
                 boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml");
                 if (updateRequired)
                     listener.getLogger().println("[APMG] - Updated repository package.xml file.");
@@ -138,7 +140,7 @@ public class APMGBuilder extends Builder {
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         /**
-         * In order to load the persisted global configuration, you have to 
+         * In order to load the persisted global configuration, you have to
          * call load() in the constructor.
          */
         public DescriptorImpl() {
@@ -146,7 +148,7 @@ public class APMGBuilder extends Builder {
         }
 
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            // Indicates that this builder can be used with all kinds of project types 
+            // Indicates that this builder can be used with all kinds of project types
             return true;
         }
 
@@ -160,6 +162,8 @@ public class APMGBuilder extends Builder {
 
     public boolean getRollbackEnabled() { return rollbackEnabled;}
 
-    public boolean getUpdatePackageEnabled() {return updatePackageEnabled; }
+    public boolean getUpdatePackageEnabled() { return updatePackageEnabled; }
+
+    public boolean getForceInitialBuild() { return forceInitialBuild; }
 }
 
