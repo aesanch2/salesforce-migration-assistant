@@ -8,7 +8,7 @@
 
   <artifactId>apmg</artifactId>
   <name>Automated Package Manifest Generator</name>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
   <packaging>hpi</packaging>
 
   <licenses>
