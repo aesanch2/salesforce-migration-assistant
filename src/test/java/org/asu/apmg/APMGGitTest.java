@@ -117,7 +117,7 @@ public class APMGGitTest {
         oldTree.reset(reader, oldHead);
         newTree.reset(reader, newHead);
 
-        git = new APMGGit(gitDir, oldSha, newSha);
+        git = new APMGGit(gitDir, newSha, oldSha);
 
         ArrayList<String> deletedContents = git.getDeletions();
         ArrayList<String> newContents = git.getNewChangeSet();
@@ -153,7 +153,7 @@ public class APMGGitTest {
         expectedContents.add("src/class/deleteThis.cls");
         expectedContents.add("src/pages/modifyThis.page");
 
-        git = new APMGGit(gitDir, oldSha, newSha);
+        git = new APMGGit(gitDir, newSha, oldSha);
 
         ArrayList<String> contents = git.getOldChangeSet();
 
@@ -166,7 +166,7 @@ public class APMGGitTest {
      */
     @Test
     public void testGetPrevCommitFiles() throws Exception{
-        git = new APMGGit(gitDir, oldSha, newSha);
+        git = new APMGGit(gitDir, newSha, oldSha);
 
         ArrayList<String> destructiveChanges = git.getAdditions();
         ArrayList<String> changes = git.getOldChangeSet();
@@ -189,7 +189,7 @@ public class APMGGitTest {
      */
     @Test
     public void testCommitPackageXML() throws Exception{
-        git = new APMGGit(gitDir, oldSha, newSha);
+        git = new APMGGit(gitDir, newSha, oldSha);
 
         assertTrue(git.updatePackageXML(localPath.getPath() + "/src/package.xml"));
     }

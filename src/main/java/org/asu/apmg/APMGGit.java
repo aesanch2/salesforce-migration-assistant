@@ -52,11 +52,11 @@ public class APMGGit {
     /**
      * Creates an APMGGit instance for all other builds.
      * @param pathToRepo The path to the git repository.
-     * @param prevCommit The previous commit.
      * @param curCommit The current commit.
+     * @param prevCommit The previous commit.
      * @throws Exception
      */
-    public APMGGit(String pathToRepo, String prevCommit, String curCommit) throws Exception{
+    public APMGGit(String pathToRepo, String curCommit, String prevCommit) throws Exception{
         File repoDir = new File(pathToRepo);
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         repository = builder.setGitDir(repoDir).readEnvironment().build();
