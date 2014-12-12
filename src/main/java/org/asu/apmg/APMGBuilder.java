@@ -69,7 +69,7 @@ public class APMGBuilder extends Builder {
             //This was the initial commit to the repo or the first build
             if (prevCommit == null || getForceInitialBuild()){
                 prevCommit = null;
-                git = new APMGGit(pathToRepo, prevCommit);
+                git = new APMGGit(pathToRepo, newCommit);
             }
             //If we have a previous successful commit from the git plugin
             else{
