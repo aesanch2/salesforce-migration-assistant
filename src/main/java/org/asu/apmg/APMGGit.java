@@ -161,7 +161,7 @@ public class APMGGit {
 
     /**
      * Creates an updated package.xml file and commits it to the repository
-     * @param manifestLocation
+     * @param manifestLocation The location of the package manifest to be updated.
      * @return A boolean value indicating whether an update was required or not.
      * @throws Exception
      */
