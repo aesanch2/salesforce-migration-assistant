@@ -35,6 +35,8 @@ public class APMGBuilder extends Builder {
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         String newCommit;
         String prevCommit;
+        String jenkinsGitUserName;
+        String jenkinsGitEmail;
         String workspaceDirectory;
         String jobName;
         String buildTag;
@@ -51,6 +53,8 @@ public class APMGBuilder extends Builder {
 
             newCommit = envVars.get("GIT_COMMIT");
             prevCommit = envVars.get("GIT_PREVIOUS_SUCCESSFUL_COMMIT");
+            jenkinsGitUserName = envVars.get("GIT_COMMITTER_NAME");
+            jenkinsGitEmail = envVars.get("GIT_COMMITTER_EMAIL");
             workspaceDirectory = envVars.get("WORKSPACE");
             jobName = envVars.get("JOB_NAME");
             buildTag = envVars.get("BUILD_TAG");
@@ -116,7 +120,8 @@ public class APMGBuilder extends Builder {
 
             //Check to see if we need to update the repository's package.xml file
             if(getUpdatePackageEnabled()){
-                boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml");
+                boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml",
+                        jenkinsGitUserName, jenkinsGitEmail);
                 if (updateRequired)
                     listener.getLogger().println("[APMG] - Updated repository package.xml file.");
             }

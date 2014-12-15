@@ -191,6 +191,6 @@ public class APMGGitTest {
     public void testCommitPackageXML() throws Exception{
         git = new APMGGit(gitDir, newSha, oldSha);
 
-        assertTrue(git.updatePackageXML(localPath.getPath() + "/src/package.xml"));
+        assertTrue(git.updatePackageXML(localPath.getPath() + "/src/package.xml", "Test Guy", "testguy@example.net"));
     }
 }

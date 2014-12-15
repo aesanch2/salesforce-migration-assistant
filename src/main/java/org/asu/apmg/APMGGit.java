@@ -162,16 +162,18 @@ public class APMGGit {
     /**
      * Creates an updated package.xml file and commits it to the repository
      * @param manifestLocation The location of the package manifest to be updated.
+     * @param userName The user name of the committer.
+     * @param userEmail The email of the committer.
      * @return A boolean value indicating whether an update was required or not.
      * @throws Exception
      */
-    public boolean updatePackageXML(String manifestLocation) throws Exception{
+    public boolean updatePackageXML(String manifestLocation, String userName, String userEmail) throws Exception{
         if (!getAdditions().isEmpty() || !getDeletions().isEmpty()){
             APMGGenerator.generate(getContents(), manifestLocation, false);
 
             //Commit the updated package.xml file to the repository
             git.add().addFilepattern("src/package.xml").call();
-            git.commit().setMessage("Jenkins updated src/package.xml").call();
+            git.commit().setCommitter(userName, userEmail).setMessage("Jenkins updated src/package.xml").call();
 
             return true;
         }
