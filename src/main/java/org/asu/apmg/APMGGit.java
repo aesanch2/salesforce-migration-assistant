@@ -131,12 +131,12 @@ public class APMGGit {
         RevWalk revWalk = new RevWalk(repository);
         RevCommit commit = revWalk.parseCommit(prevCommitId);
         RevTree tree = commit.getTree();
-
-        TreeWalk treeWalk = new TreeWalk(repository);
-        treeWalk.addTree(tree);
-        treeWalk.setRecursive(true);
+        TreeWalk treeWalk;
 
         for(APMGMetadataObject file : members){
+            treeWalk = new TreeWalk(repository);
+            treeWalk.addTree(tree);
+            treeWalk.setRecursive(true);
             String fullName = file.getPath() + file.getFullName();
             treeWalk.setFilter(PathFilter.create(fullName));
             if(!treeWalk.next()){
