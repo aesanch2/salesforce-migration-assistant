@@ -16,11 +16,12 @@ public class APMGMetadataObjectTest {
     String path = "src/container/";
     boolean destructible = true;
     boolean valid = true;
+    boolean metaxml = true;
 
     @Before
     public void setUp() throws Exception {
          metadataObject = new APMGMetadataObject(extension, container, member, metadataType,
-                 path, destructible, valid);
+                 path, destructible, valid, metaxml);
     }
 
     @Test
@@ -97,5 +98,21 @@ public class APMGMetadataObjectTest {
         destructible = false;
         metadataObject.setDestructible(destructible);
         assertEquals(destructible, metadataObject.isDestructible());
+    }
+
+    @Test
+    public void testHasMetaxml() throws Exception {
+        if (metaxml){
+            assertTrue(metadataObject.hasMetaxml());
+        }else{
+            assertTrue(!metadataObject.hasMetaxml());
+        }
+    }
+
+    @Test
+    public void testSetMetaxml() throws Exception {
+        metaxml = false;
+        metadataObject.setMetaxml(metaxml);
+        assertEquals(metaxml, metadataObject.hasMetaxml());
     }
 }
