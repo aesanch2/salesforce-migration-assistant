@@ -3,10 +3,7 @@ package org.asu.apmg;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -19,9 +16,9 @@ public class APMGUtility {
 
     /**
      * Copies all necessary files to the deployment stage.
-     * @param members
-     * @param sourceDir
-     * @param destDir
+     * @param members The list of metadata members to replicate.
+     * @param sourceDir The directory where the members are located.
+     * @param destDir The destination to copy the members to.
      * @throws IOException
      */
     public static void replicateMembers(ArrayList<APMGMetadataObject> members,
@@ -33,14 +30,26 @@ public class APMGUtility {
                 destination.mkdirs();
             }
             FileUtils.copyFileToDirectory(source, destination);
+
+            //Copy the accompanying -meta.xml file if appropriate. Throw exception if not found.
+            if(file.hasMetaxml()){
+                File metaXML = new File(sourceDir + "/" + file.getPath() + file.getFullName() + "-meta.xml");
+                if (metaXML.exists()) {
+                    FileUtils.copyFileToDirectory(metaXML, destination);
+                }
+                else{
+                    throw new FileNotFoundException("Could not locate the metadata file for '" +
+                    file.getFullName() + "'. Perhaps you forgot to commit it?");
+                }
+            }
         }
     }
 
     /**
      * Helper method that generates the package manifest files.
-     * @param destructiveChanges
-     * @param changes
-     * @param destination
+     * @param destructiveChanges The list of items that were deleted from the repository in this commit.
+     * @param changes The list of items that were added or modified from the repository in this commit.
+     * @param destination The destination of the package manifest file.
      * @return An ArrayList of the APMGMetadataObjects that were included in this commit.
      */
     public static ArrayList<APMGMetadataObject> generateManifests(ArrayList<String> destructiveChanges,
@@ -53,23 +62,20 @@ public class APMGUtility {
             APMGGenerator.generate(destructiveChanges, destructiveChangesFile, isDestructiveChange);
         }
         String packageManifest= destination + "/src/package.xml";
-        ArrayList<APMGMetadataObject> members = APMGGenerator.generate(changes, packageManifest, !isDestructiveChange);
 
-        return members;
+        return APMGGenerator.generate(changes, packageManifest, !isDestructiveChange);
     }
 
     /**
      * Helper method that generates the rollback package zip file.
-     * @param rollbackDirectory
-     * @param jobName
-     * @param buildNumber
+     * @param rollbackDirectory The location of the directory where the rollback items are located.
+     * @param buildTag The build tag created by Jenkins for this job.
      * @throws Exception
      */
-    public static void zipRollbackPackage(String rollbackDirectory,
-                                          String jobName,
-                                          String buildNumber) throws Exception{
-        String zipFile = "/"+ FilenameUtils.getPath(rollbackDirectory) + jobName + "_" + buildNumber + "_rollback.zip";
-        String srcDir = rollbackDirectory;
+    public static String zipRollbackPackage(File rollbackDirectory,
+                                          String buildTag) throws Exception{
+        String zipFile = "/"+ FilenameUtils.getPath(rollbackDirectory.getPath()) + buildTag + "-APMGrollback.zip";
+        String srcDir = rollbackDirectory.getPath();
 
         FileOutputStream fop = new FileOutputStream(zipFile);
         ZipOutputStream zop = new ZipOutputStream(fop);
@@ -80,27 +86,29 @@ public class APMGUtility {
 
         zop.close();
         fop.close();
+
+        return zipFile;
     }
 
     /**
      * Helper method that aids zipRollbackPackage in recursively creating a zip file from a directory's contents.
-     * @param zop
-     * @param srcFile
+     * @param zop ZipOutputStream from zipRollbackPackage.
+     * @param srcFile The files in this directory to be zipped.
      * @throws Exception
      */
     private static void addDirToArchive(ZipOutputStream zop, File srcFile) throws Exception{
         File[] files = srcFile.listFiles();
 
-        for (int i = 0; i < files.length; i++){
-            if (files[i].isDirectory()){
-                addDirToArchive(zop, files[i]);
+        for (File file : files){
+            if (file.isDirectory()){
+                addDirToArchive(zop, file);
                 continue;
             }
 
             byte[] buffer = new byte[1024];
 
-            FileInputStream fis = new FileInputStream(files[i]);
-            zop.putNextEntry(new ZipEntry(files[i].getName()));
+            FileInputStream fis = new FileInputStream(file);
+            zop.putNextEntry(new ZipEntry(file.getName()));
 
             int length;
             while((length = fis.read(buffer)) > 0){

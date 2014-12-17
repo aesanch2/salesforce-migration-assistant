@@ -65,8 +65,7 @@ public class APMGGenerator {
                 metadata = APMGMetadataXmlDocument.createMetadataObject(repoItem);
 
                 //Handle unknown members
-                if(metadata.getMetadataType().equals("XML")
-                        || metadata.getMetadataType().equals("Invalid")) {
+                if(metadata.getMetadataType().equals("Invalid")) {
                     if (metadata.getFullName().contains("-meta")){
                         contents.add(metadata);
                         LOG.fine(metadata.getFullName() + " is a valid member, but unnecessary for manifest");
@@ -162,7 +161,8 @@ public class APMGGenerator {
      * @author aesanch2
      */
     public static final class APMGMetadataXmlDocument {
-        private static String pathToResource = "src/main/resources/org/asu/apmg/salesforceMetadata.xml";
+        private static final ClassLoader loader = APMGGenerator.APMGMetadataXmlDocument.class.getClassLoader();
+        private static String pathToResource = loader.getResource("org/asu/apmg/salesforceMetadata.xml").toString();
         private static Document doc;
 
         /**
@@ -224,6 +224,7 @@ public class APMGGenerator {
             String metadataType = "Invalid";
             boolean destructible = false;
             boolean valid = false;
+            boolean metaxml = false;
 
             File file = new File(filename);
             String object = file.getName();
@@ -249,12 +250,13 @@ public class APMGGenerator {
                     destructible = Boolean.parseBoolean(element.getElementsByTagName("destructible").item(0).
                             getTextContent());
                     valid = true;
+                    metaxml = Boolean.parseBoolean(element.getElementsByTagName("metaxml").item(0).getTextContent());
                     break;
                 }
             }
 
             return new APMGMetadataObject(extension, container, member, metadataType,
-                    path, destructible, valid);
+                    path, destructible, valid, metaxml);
         }
     }
 }

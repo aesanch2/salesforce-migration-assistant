@@ -105,10 +105,10 @@ plan the contents of your repository accordingly.
 #### -> 1.0
 * Initial Release
 * Generate manifest package file based on git-diffs
-* Store the previous successfully deployed git commit in each job
 * Generate a rollback package based on what was deployed/deleted/modified
 * Create a deployment package in the job's workspace
 * Create an updated version of package.xml if necessary
+* Allow user to force initial build/commit behavior for a job at will
 
 ### Licensing
 

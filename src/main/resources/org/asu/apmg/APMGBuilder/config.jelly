@@ -5,4 +5,7 @@
   <f:entry field="updatePackageEnabled">
     <f:checkbox title="Update remote's package manifest"/>
   </f:entry>
+  <f:entry field="forceInitialBuild">
+    <f:checkbox title="Force initial build"/>
+  </f:entry>
 </j:jelly>
