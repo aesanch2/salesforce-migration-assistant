@@ -20,7 +20,7 @@ public class APMGUtilityTest {
 
     private Repository repository;
     private APMGGit git;
-    private File addition, modification, deletion, localPath;
+    private File addition, addXml, modification, modXml, deletion, delXml, localPath;
     private String oldSha, newSha, gitDir;
     private ArrayList<APMGMetadataObject> expectedList;
 
@@ -32,7 +32,7 @@ public class APMGUtilityTest {
         repository = FileRepositoryBuilder.create(new File(localPath, ".git"));
         repository.create();
 
-        File classesPath = new File(repository.getDirectory().getParent() + "/src/class");
+        File classesPath = new File(repository.getDirectory().getParent() + "/src/classes");
         classesPath.mkdirs();
         File pagesPath = new File(repository.getDirectory().getParent() + "/src/pages");
         pagesPath.mkdirs();
@@ -42,17 +42,23 @@ public class APMGUtilityTest {
 
         //Add the first collection of files
         deletion = new File(classesPath, "deleteThis.cls");
+        delXml = new File(classesPath, "deleteThis.cls-meta.xml");
         modification = new File(pagesPath, "modifyThis.page");
+        modXml = new File(pagesPath, "modifyThis.page-meta.xml");
         deletion.createNewFile();
+        delXml.createNewFile();
         modification.createNewFile();
+        modXml.createNewFile();
         PrintWriter print = new PrintWriter(deletion);
         print.println("This is the deleteThis file contents.");
         print.close();
         print = new PrintWriter(modification);
         print.println("This is the modifyThis file contents.");
         print.close();
-        new Git(repository).add().addFilepattern("src/class/deleteThis.cls").call();
+        new Git(repository).add().addFilepattern("src/classes/deleteThis.cls").call();
+        new Git(repository).add().addFilepattern("src/classes/deleteThis.cls-meta.xml").call();
         new Git(repository).add().addFilepattern("src/pages/modifyThis.page").call();
+        new Git(repository).add().addFilepattern("src/pages/modifyThis.page-meta.xml").call();
 
         //Create the first commit
         RevCommit firstCommit = new Git(repository).commit().setMessage("Add deleteThis and modifyThis").call();
@@ -61,14 +67,18 @@ public class APMGUtilityTest {
 
         //Delete the deletion file, modify the modification file, and add the addition file
         new Git(repository).rm().addFilepattern("src/class/deleteThis.cls").call();
+        new Git(repository).rm().addFilepattern("src/class/deleteThis.cls-meta.xml").call();
         modification.setExecutable(true);
         addition = new File(triggersPath, "addThis.trigger");
+        addXml = new File(triggersPath, "addThis.trigger-meta.xml");
         addition.createNewFile();
+        addXml.createNewFile();
         print = new PrintWriter(addition);
         print.println("This is the addThis file contents.");
         print.close();
         new Git(repository).add().addFilepattern("src/pages/modifyThis.page").call();
         new Git(repository).add().addFilepattern("src/triggers/addThis.trigger").call();
+        new Git(repository).add().addFilepattern("src/triggers/addThis.trigger-meta.xml").call();
         new Git(repository).add().addFilepattern("src/class/deleteThis.cls").call();
 
         //Create the second commit
@@ -113,6 +123,8 @@ public class APMGUtilityTest {
         //Create our expected members list
         expectedList = new ArrayList<APMGMetadataObject>();
         expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/triggers/addThis.trigger"));
+        expectedList.add(APMGGenerator.APMGMetadataXmlDocument.
+                createMetadataObject("src/triggers/addThis.trigger-meta.xml"));
         expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/pages/modifyThis.page"));
 
         git = new APMGGit(gitDir, newSha, oldSha);
@@ -138,7 +150,6 @@ public class APMGUtilityTest {
 
         //Create our expected members list
         expectedList = new ArrayList<APMGMetadataObject>();
-        expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/classes/deleteThis.cls"));
         expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/pages/modifyThis.page"));
 
         git = new APMGGit(gitDir, newSha, oldSha);
@@ -163,7 +174,7 @@ public class APMGUtilityTest {
 
         ArrayList<String> destructiveChanges = git.getAdditions();
         ArrayList<String> changes = git.getOldChangeSet();
-        String destination = localPath.getPath() + "/rollback";
+        String destination = localPath + "/rollback";
 
         ArrayList<APMGMetadataObject> members = APMGUtility.generateManifests(destructiveChanges, changes,
                 destination);
@@ -174,9 +185,10 @@ public class APMGUtilityTest {
         String buildNumber = "TestBuildNumber";
         String buildTag = jobName + "-" + buildNumber;
 
-        APMGUtility.zipRollbackPackage(destination, buildTag);
+        File dest = new File(destination);
+        APMGUtility.zipRollbackPackage(dest, buildTag);
 
-        File zipTest = new File(localPath.getPath() + "/" + buildTag + "-rollback.zip");
+        File zipTest = new File(localPath.getPath() + "/" + buildTag + "-APMGrollback.zip");
         assertTrue(zipTest.exists());
     }
 

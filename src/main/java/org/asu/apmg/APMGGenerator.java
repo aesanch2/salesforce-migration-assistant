@@ -65,8 +65,7 @@ public class APMGGenerator {
                 metadata = APMGMetadataXmlDocument.createMetadataObject(repoItem);
 
                 //Handle unknown members
-                if(metadata.getMetadataType().equals("XML")
-                        || metadata.getMetadataType().equals("Invalid")) {
+                if(metadata.getMetadataType().equals("Invalid")) {
                     if (metadata.getFullName().contains("-meta")){
                         contents.add(metadata);
                         LOG.fine(metadata.getFullName() + " is a valid member, but unnecessary for manifest");
@@ -225,6 +224,7 @@ public class APMGGenerator {
             String metadataType = "Invalid";
             boolean destructible = false;
             boolean valid = false;
+            boolean metaxml = false;
 
             File file = new File(filename);
             String object = file.getName();
@@ -250,12 +250,13 @@ public class APMGGenerator {
                     destructible = Boolean.parseBoolean(element.getElementsByTagName("destructible").item(0).
                             getTextContent());
                     valid = true;
+                    metaxml = Boolean.parseBoolean(element.getElementsByTagName("metaxml").item(0).getTextContent());
                     break;
                 }
             }
 
             return new APMGMetadataObject(extension, container, member, metadataType,
-                    path, destructible, valid);
+                    path, destructible, valid, metaxml);
         }
     }
 }

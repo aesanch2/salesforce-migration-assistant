@@ -3,10 +3,7 @@ package org.asu.apmg;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -33,6 +30,18 @@ public class APMGUtility {
                 destination.mkdirs();
             }
             FileUtils.copyFileToDirectory(source, destination);
+
+            //Copy the accompanying -meta.xml file if appropriate. Throw exception if not found.
+            if(file.hasMetaxml()){
+                File metaXML = new File(sourceDir + "/" + file.getPath() + file.getFullName() + "-meta.xml");
+                if (metaXML.exists()) {
+                    FileUtils.copyFileToDirectory(metaXML, destination);
+                }
+                else{
+                    throw new FileNotFoundException("Could not locate the metadata file for '" +
+                    file.getFullName() + "'. Perhaps you forgot to commit it?");
+                }
+            }
         }
     }
 

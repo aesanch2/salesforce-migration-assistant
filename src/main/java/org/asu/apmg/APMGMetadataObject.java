@@ -12,6 +12,7 @@ public class APMGMetadataObject {
     private String path;
     private boolean destructible;
     private boolean valid;
+    private boolean metaxml;
 
     /**
      * Constructor for APMGMetdataObject
@@ -22,9 +23,10 @@ public class APMGMetadataObject {
      * @param path
      * @param destructible
      * @param valid
+     * @param metaxml
      */
     public APMGMetadataObject(String extension, String container, String member,
-                              String metadataType, String path, boolean destructible, boolean valid) {
+                              String metadataType, String path, boolean destructible, boolean valid, boolean metaxml) {
         this.extension = extension;
         this.container = container;
         this.member = member;
@@ -32,6 +34,7 @@ public class APMGMetadataObject {
         this.path = path;
         this.destructible = destructible;
         this.valid = valid;
+        this.metaxml = metaxml;
     }
 
     /**
@@ -144,6 +147,22 @@ public class APMGMetadataObject {
      */
     public void setValid(boolean valid) {
         this.valid = valid;
+    }
+
+    /**
+     * Returns whether or not this metadata object has an accompanying -meta.xml file.
+     * @return
+     */
+    public boolean hasMetaxml() {
+        return metaxml;
+    }
+
+    /**
+     * Sets the boolean to determine if this metadata object has an accompanying -meta.xml file
+     * @param metaxml
+     */
+    public void setMetaxml(boolean metaxml) {
+        this.metaxml = metaxml;
     }
 
     /**
