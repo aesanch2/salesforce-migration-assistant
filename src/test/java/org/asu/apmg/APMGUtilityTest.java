@@ -103,7 +103,7 @@ public class APMGUtilityTest {
         ArrayList<String> changes = git.getNewChangeSet();
         String destination = localPath.getPath() + "/deployStage";
 
-        ArrayList<APMGMetadataObject> members = APMGUtility.generateManifests(destructiveChanges, changes,
+        ArrayList<APMGMetadataObject> members = APMGUtility.generate(destructiveChanges, changes,
                 destination);
 
         APMGUtility.replicateMembers(members, localPath.getPath(), destination);
@@ -118,14 +118,14 @@ public class APMGUtilityTest {
     @Test
     public void generateManifestsTest() throws Exception{
         //Setup the metadata xml document
-        APMGGenerator.APMGMetadataXmlDocument.initDocument();
+        APMGManifestGenerator.APMGMetadataXmlDocument.initDocument();
 
         //Create our expected members list
         expectedList = new ArrayList<APMGMetadataObject>();
-        expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/triggers/addThis.trigger"));
-        expectedList.add(APMGGenerator.APMGMetadataXmlDocument.
+        expectedList.add(APMGManifestGenerator.APMGMetadataXmlDocument.createMetadataObject("src/triggers/addThis.trigger"));
+        expectedList.add(APMGManifestGenerator.APMGMetadataXmlDocument.
                 createMetadataObject("src/triggers/addThis.trigger-meta.xml"));
-        expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/pages/modifyThis.page"));
+        expectedList.add(APMGManifestGenerator.APMGMetadataXmlDocument.createMetadataObject("src/pages/modifyThis.page"));
 
         git = new APMGGit(gitDir, newSha, oldSha);
 
@@ -133,7 +133,7 @@ public class APMGUtilityTest {
         ArrayList<String> changes = git.getNewChangeSet();
         String destination = localPath.getPath() + "/rollback";
 
-        ArrayList<APMGMetadataObject> results = APMGUtility.generateManifests(destructiveChanges, changes,
+        ArrayList<APMGMetadataObject> results = APMGUtility.generate(destructiveChanges, changes,
                 destination);
 
         assertEquals(expectedList.size(), results.size());
@@ -146,11 +146,11 @@ public class APMGUtilityTest {
     @Test
     public void generateManifestsTestRollback() throws Exception{
         //Setup the metadata xml document
-        APMGGenerator.APMGMetadataXmlDocument.initDocument();
+        APMGManifestGenerator.APMGMetadataXmlDocument.initDocument();
 
         //Create our expected members list
         expectedList = new ArrayList<APMGMetadataObject>();
-        expectedList.add(APMGGenerator.APMGMetadataXmlDocument.createMetadataObject("src/pages/modifyThis.page"));
+        expectedList.add(APMGManifestGenerator.APMGMetadataXmlDocument.createMetadataObject("src/pages/modifyThis.page"));
 
         git = new APMGGit(gitDir, newSha, oldSha);
 
@@ -158,7 +158,7 @@ public class APMGUtilityTest {
         ArrayList<String> changes = git.getOldChangeSet();
         String destination = localPath.getPath() + "/rollback";
 
-        ArrayList<APMGMetadataObject> results = APMGUtility.generateManifests(destructiveChanges, changes,
+        ArrayList<APMGMetadataObject> results = APMGUtility.generate(destructiveChanges, changes,
                 destination);
 
         assertEquals(expectedList.size(), results.size());
@@ -176,7 +176,7 @@ public class APMGUtilityTest {
         ArrayList<String> changes = git.getOldChangeSet();
         String destination = localPath + "/rollback";
 
-        ArrayList<APMGMetadataObject> members = APMGUtility.generateManifests(destructiveChanges, changes,
+        ArrayList<APMGMetadataObject> members = APMGUtility.generate(destructiveChanges, changes,
                 destination);
 
         git.getPrevCommitFiles(members, destination);

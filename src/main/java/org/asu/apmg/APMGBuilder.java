@@ -6,6 +6,7 @@ import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -19,16 +20,25 @@ import java.util.List;
 public class APMGBuilder extends Builder {
 
     private APMGGit git;
-    private boolean rollbackEnabled, updatePackageEnabled, forceInitialBuild;
+    private boolean rollbackEnabled, updatePackageEnabled,
+            forceInitialBuild, runUnitTests;
+    private JSONObject generateManifests, generateAntEnabled;
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public APMGBuilder(Boolean rollbackEnabled,
-                       Boolean updatePackageEnabled,
-                       Boolean forceInitialBuild) {
-        this.rollbackEnabled = rollbackEnabled;
-        this.updatePackageEnabled = updatePackageEnabled;
-        this.forceInitialBuild = forceInitialBuild;
+    public APMGBuilder(JSONObject generateManifests,
+                       JSONObject generateAntEnabled) {
+        this.generateManifests = generateManifests;
+        if(generateManifests != null) {
+            rollbackEnabled = Boolean.valueOf(generateManifests.get("rollbackEnabled").toString());
+            updatePackageEnabled = Boolean.valueOf(generateManifests.get("updatePackageEnabled").toString());
+            forceInitialBuild = Boolean.valueOf(generateManifests.get("forceInitialBuild").toString());
+        }
+
+        this.generateAntEnabled = generateAntEnabled;
+        if(generateAntEnabled != null) {
+            runUnitTests = Boolean.valueOf(generateAntEnabled.get("runUnitTests").toString());
+        }
     }
 
     @Override
@@ -70,7 +80,6 @@ public class APMGBuilder extends Builder {
             //Put the deployment stage location into the environment as a variable
             parameterValues = new ArrayList<ParameterValue>();
             parameterValues.add(new StringParameterValue("APMG_DEPLOY", deployStage.getPath()+"/src"));
-
             String pathToRepo = workspaceDirectory + "/.git";
 
             //This was the initial commit to the repo or the first build
@@ -83,47 +92,56 @@ public class APMGBuilder extends Builder {
                 git = new APMGGit(pathToRepo, newCommit, prevCommit);
             }
 
-            //Get our change sets
-            listOfDestructions = git.getDeletions();
-            listOfUpdates = git.getNewChangeSet();
+            //Check to see if we need to generateManifest the manifest files
+            if(getGenerateManifests()){
+                //Get our change sets
+                listOfDestructions = git.getDeletions();
+                listOfUpdates = git.getNewChangeSet();
 
-            //Generate the manifests
-            members = APMGUtility.generateManifests(listOfDestructions, listOfUpdates, deployStage.getPath());
-            listener.getLogger().println("[APMG] - Created deployment package.");
+                //Generate the manifests
+                members = APMGUtility.generate(listOfDestructions, listOfUpdates, deployStage.getPath());
+                listener.getLogger().println("[APMG] - Created deployment package.");
 
-            //Copy the files to the deployStage
-            APMGUtility.replicateMembers(members, workspaceDirectory, deployStage.getPath());
+                //Copy the files to the deployStage
+                APMGUtility.replicateMembers(members, workspaceDirectory, deployStage.getPath());
 
-            //Check for rollback
-            if (getRollbackEnabled() && prevCommit != null){
-                String rollbackDirectory = jenkinsHome + "/jobs/" + jobName + "/builds/" + buildNumber + "/rollback";
-                File rollbackStage = new File(rollbackDirectory);
-                if(rollbackStage.exists()){
+                //Check for rollback
+                if (getRollbackEnabled() && prevCommit != null){
+                    String rollbackDirectory = jenkinsHome + "/jobs/" + jobName + "/builds/" + buildNumber + "/rollback";
+                    File rollbackStage = new File(rollbackDirectory);
+                    if(rollbackStage.exists()){
+                        FileUtils.deleteDirectory(rollbackStage);
+                    }rollbackStage.mkdirs();
+
+                    //Get our lists
+                    ArrayList<String> listOfOldItems = git.getOldChangeSet();
+                    ArrayList<String> listOfAdditions = git.getAdditions();
+
+                    //Generate the manifests for the rollback package
+                    ArrayList<APMGMetadataObject> rollbackMembers =
+                            APMGUtility.generate(listOfAdditions, listOfOldItems, rollbackDirectory);
+
+                    //Copy the files to the rollbackStage and zip up the rollback stage
+                    git.getPrevCommitFiles(rollbackMembers, rollbackDirectory);
+                    String zipFile = APMGUtility.zipRollbackPackage(rollbackStage, buildTag);
                     FileUtils.deleteDirectory(rollbackStage);
-                }rollbackStage.mkdirs();
+                    parameterValues.add(new StringParameterValue("APMG_ROLLBACK", zipFile));
+                    listener.getLogger().println("[APMG] - Created rollback package.");
+                }
 
-                //Get our lists
-                ArrayList<String> listOfOldItems = git.getOldChangeSet();
-                ArrayList<String> listOfAdditions = git.getAdditions();
-
-                //Generate the manifests for the rollback package
-                ArrayList<APMGMetadataObject> rollbackMembers =
-                        APMGUtility.generateManifests(listOfAdditions, listOfOldItems, rollbackDirectory);
-
-                //Copy the files to the rollbackStage and zip up the rollback stage
-                git.getPrevCommitFiles(rollbackMembers, rollbackDirectory);
-                String zipFile = APMGUtility.zipRollbackPackage(rollbackStage, buildTag);
-                FileUtils.deleteDirectory(rollbackStage);
-                parameterValues.add(new StringParameterValue("APMG_ROLLBACK", zipFile));
-                listener.getLogger().println("[APMG] - Created rollback package.");
+                //Check to see if we need to update the repository's package.xml file
+                if(getUpdatePackageEnabled()){
+                    boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml",
+                            jenkinsGitUserName, jenkinsGitEmail);
+                    if (updateRequired)
+                        listener.getLogger().println("[APMG] - Updated repository package.xml file.");
+                }
             }
 
-            //Check to see if we need to update the repository's package.xml file
-            if(getUpdatePackageEnabled()){
-                boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml",
-                        jenkinsGitUserName, jenkinsGitEmail);
-                if (updateRequired)
-                    listener.getLogger().println("[APMG] - Updated repository package.xml file.");
+            //Check to see if we need to generateManifest the build file
+            if(getGenerateAntEnabled()){
+                APMGUtility.generate(deployStage.getPath(), getRunUnitTests(), git.getContents());
+                listener.getLogger().println("[APMG] - Created build file");
             }
 
             build.addAction(new ParametersAction(parameterValues));
@@ -170,10 +188,28 @@ public class APMGBuilder extends Builder {
         }
     }
 
-    public boolean getRollbackEnabled() { return rollbackEnabled;}
+    public boolean getGenerateManifests() {
+        if(generateManifests == null){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+    public boolean getGenerateAntEnabled() {
+        if(generateAntEnabled == null){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+    public boolean getRollbackEnabled() { return rollbackEnabled; }
 
     public boolean getUpdatePackageEnabled() { return updatePackageEnabled; }
 
     public boolean getForceInitialBuild() { return forceInitialBuild; }
+
+    public boolean getRunUnitTests() { return runUnitTests; }
 }
 

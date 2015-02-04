@@ -169,7 +169,7 @@ public class APMGGit {
      */
     public boolean updatePackageXML(String manifestLocation, String userName, String userEmail) throws Exception{
         if (!getAdditions().isEmpty() || !getDeletions().isEmpty()){
-            APMGGenerator.generate(getContents(), manifestLocation, false);
+            APMGManifestGenerator.generateManifest(getContents(), manifestLocation, false);
 
             //Commit the updated package.xml file to the repository
             git.add().addFilepattern("src/package.xml").call();
@@ -185,7 +185,7 @@ public class APMGGit {
      * @return ArrayList containing the full path for all items in the repository.
      * @throws IOException
      */
-    private ArrayList<String> getContents() throws IOException{
+    public ArrayList<String> getContents() throws IOException{
         contents = new ArrayList<String>();
         ObjectId commitId = repository.resolve(curCommit);
         RevWalk revWalk = new RevWalk(repository);

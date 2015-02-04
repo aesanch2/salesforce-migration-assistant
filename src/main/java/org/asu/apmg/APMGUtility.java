@@ -2,9 +2,17 @@ package org.asu.apmg;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.w3c.dom.Document;
 
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -13,6 +21,55 @@ import java.util.zip.ZipOutputStream;
  * @author aesanch2
  */
 public class APMGUtility {
+
+    private static final Logger LOG = Logger.getLogger(APMGUtility.class.getName());
+
+    public static void writeXML(String destination, Document xmlToWrite){
+        try {
+            //Prepare the workspace for the manifest
+            File directory = new File(FilenameUtils.getFullPath(destination));
+            directory.mkdirs();
+
+            //Write the manifest
+            DOMSource source = new DOMSource(xmlToWrite);
+            StreamResult result = new StreamResult(new File(destination));
+            TransformerFactory transFactory = TransformerFactory.newInstance();
+            Transformer transformer = transFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+            transformer.transform(source, result);
+
+            removeFirstLine(destination);
+
+            LOG.info("Saved xml file to " + destination);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
+    private static void removeFirstLine(String fileName) throws IOException {
+        RandomAccessFile raf = new RandomAccessFile(fileName, "rw");
+        //Initial write position
+        long writePosition = raf.getFilePointer();
+        raf.readLine();
+        // Shift the next lines upwards.
+        long readPosition = raf.getFilePointer();
+
+        byte[] buff = new byte[1024];
+        int n;
+        while (-1 != (n = raf.read(buff))) {
+            raf.seek(writePosition);
+            raf.write(buff, 0, n);
+            readPosition += n;
+            writePosition += n;
+            raf.seek(readPosition);
+        }
+        raf.setLength(writePosition);
+        raf.close();
+    }
 
     /**
      * Copies all necessary files to the deployment stage.
@@ -45,6 +102,12 @@ public class APMGUtility {
         }
     }
 
+    public static void generate(String destination, Boolean generateUnitTests, ArrayList<String> repoContents){
+        String buildFile = destination + "/build/build.xml";
+
+        APMGBuildGenerator.generateBuildFile(buildFile, generateUnitTests, repoContents);
+    }
+
     /**
      * Helper method that generates the package manifest files.
      * @param destructiveChanges The list of items that were deleted from the repository in this commit.
@@ -52,18 +115,18 @@ public class APMGUtility {
      * @param destination The destination of the package manifest file.
      * @return An ArrayList of the APMGMetadataObjects that were included in this commit.
      */
-    public static ArrayList<APMGMetadataObject> generateManifests(ArrayList<String> destructiveChanges,
+    public static ArrayList<APMGMetadataObject> generate(ArrayList<String> destructiveChanges,
                                                                   ArrayList<String> changes,
                                                                   String destination){
         Boolean isDestructiveChange = true;
         //Generate the destructiveChanges.xml file
         if(!destructiveChanges.isEmpty()){
             String destructiveChangesFile = destination + "/src/destructiveChanges.xml";
-            APMGGenerator.generate(destructiveChanges, destructiveChangesFile, isDestructiveChange);
+            APMGManifestGenerator.generateManifest(destructiveChanges, destructiveChangesFile, isDestructiveChange);
         }
         String packageManifest= destination + "/src/package.xml";
 
-        return APMGGenerator.generate(changes, packageManifest, !isDestructiveChange);
+        return APMGManifestGenerator.generateManifest(changes, packageManifest, !isDestructiveChange);
     }
 
     /**
