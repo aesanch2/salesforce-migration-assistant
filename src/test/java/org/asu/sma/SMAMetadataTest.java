@@ -1,4 +1,4 @@
-package org.asu.apmg;
+package org.asu.sma;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -6,9 +6,9 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class APMGMetadataObjectTest {
+public class SMAMetadataTest {
 
-    private APMGMetadataObject metadataObject;
+    private SMAMetadata metadataObject;
     String extension = ".ext";
     String container = "container";
     String member = "Member";
@@ -20,7 +20,7 @@ public class APMGMetadataObjectTest {
 
     @Before
     public void setUp() throws Exception {
-         metadataObject = new APMGMetadataObject(extension, container, member, metadataType,
+         metadataObject = new SMAMetadata(extension, container, member, metadataType,
                  path, destructible, valid, metaxml);
     }
 

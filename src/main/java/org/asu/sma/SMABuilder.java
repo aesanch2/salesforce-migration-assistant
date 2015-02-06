@@ -1,4 +1,4 @@
-package org.asu.apmg;
+package org.asu.sma;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -17,17 +17,17 @@ import java.util.List;
 /**
  * @author aesanch2
  */
-public class APMGBuilder extends Builder {
+public class SMABuilder extends Builder {
 
-    private APMGGit git;
+    private SMAGit git;
     private boolean rollbackEnabled, updatePackageEnabled,
-            forceInitialBuild, runUnitTests;
+            forceInitialBuild, runUnitTests, validateEnabled;
     private JSONObject generateManifests, generateAntEnabled;
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public APMGBuilder(JSONObject generateManifests,
-                       JSONObject generateAntEnabled) {
+    public SMABuilder(JSONObject generateManifests,
+                      JSONObject generateAntEnabled) {
         this.generateManifests = generateManifests;
         if(generateManifests != null) {
             rollbackEnabled = Boolean.valueOf(generateManifests.get("rollbackEnabled").toString());
@@ -37,6 +37,7 @@ public class APMGBuilder extends Builder {
 
         this.generateAntEnabled = generateAntEnabled;
         if(generateAntEnabled != null) {
+            validateEnabled = Boolean.valueOf(generateAntEnabled.get("validateEnabled").toString());
             runUnitTests = Boolean.valueOf(generateAntEnabled.get("runUnitTests").toString());
         }
     }
@@ -53,7 +54,7 @@ public class APMGBuilder extends Builder {
         String buildNumber;
         String jenkinsHome;
         ArrayList<String> listOfDestructions, listOfUpdates;
-        ArrayList<APMGMetadataObject> members;
+        ArrayList<SMAMetadata> members;
         EnvVars envVars;
         List<ParameterValue> parameterValues;
 
@@ -72,24 +73,24 @@ public class APMGBuilder extends Builder {
             jenkinsHome = envVars.get("JENKINS_HOME");
 
             //Create a deployment space for this job within the workspace
-            File deployStage = new File(workspaceDirectory + "/apmg");
+            File deployStage = new File(workspaceDirectory + "/sma");
             if(deployStage.exists()){
                 FileUtils.deleteDirectory(deployStage);
             }deployStage.mkdirs();
 
             //Put the deployment stage location into the environment as a variable
             parameterValues = new ArrayList<ParameterValue>();
-            parameterValues.add(new StringParameterValue("APMG_DEPLOY", deployStage.getPath()+"/src"));
+            parameterValues.add(new StringParameterValue("SMA_DEPLOY", deployStage.getPath()+"/src"));
             String pathToRepo = workspaceDirectory + "/.git";
 
             //This was the initial commit to the repo or the first build
             if (prevCommit == null || getForceInitialBuild()){
                 prevCommit = null;
-                git = new APMGGit(pathToRepo, newCommit);
+                git = new SMAGit(pathToRepo, newCommit);
             }
             //If we have a previous successful commit from the git plugin
             else{
-                git = new APMGGit(pathToRepo, newCommit, prevCommit);
+                git = new SMAGit(pathToRepo, newCommit, prevCommit);
             }
 
             //Check to see if we need to generateManifest the manifest files
@@ -99,11 +100,11 @@ public class APMGBuilder extends Builder {
                 listOfUpdates = git.getNewChangeSet();
 
                 //Generate the manifests
-                members = APMGUtility.generate(listOfDestructions, listOfUpdates, deployStage.getPath());
-                listener.getLogger().println("[APMG] - Created deployment package.");
+                members = SMAUtility.generate(listOfDestructions, listOfUpdates, deployStage.getPath());
+                listener.getLogger().println("[SMA] - Created deployment package.");
 
                 //Copy the files to the deployStage
-                APMGUtility.replicateMembers(members, workspaceDirectory, deployStage.getPath());
+                SMAUtility.replicateMembers(members, workspaceDirectory, deployStage.getPath());
 
                 //Check for rollback
                 if (getRollbackEnabled() && prevCommit != null){
@@ -118,15 +119,15 @@ public class APMGBuilder extends Builder {
                     ArrayList<String> listOfAdditions = git.getAdditions();
 
                     //Generate the manifests for the rollback package
-                    ArrayList<APMGMetadataObject> rollbackMembers =
-                            APMGUtility.generate(listOfAdditions, listOfOldItems, rollbackDirectory);
+                    ArrayList<SMAMetadata> rollbackMembers =
+                            SMAUtility.generate(listOfAdditions, listOfOldItems, rollbackDirectory);
 
                     //Copy the files to the rollbackStage and zip up the rollback stage
                     git.getPrevCommitFiles(rollbackMembers, rollbackDirectory);
-                    String zipFile = APMGUtility.zipRollbackPackage(rollbackStage, buildTag);
+                    String zipFile = SMAUtility.zipRollbackPackage(rollbackStage, buildTag);
                     FileUtils.deleteDirectory(rollbackStage);
-                    parameterValues.add(new StringParameterValue("APMG_ROLLBACK", zipFile));
-                    listener.getLogger().println("[APMG] - Created rollback package.");
+                    parameterValues.add(new StringParameterValue("SMA_ROLLBACK", zipFile));
+                    listener.getLogger().println("[SMA] - Created rollback package.");
                 }
 
                 //Check to see if we need to update the repository's package.xml file
@@ -134,14 +135,16 @@ public class APMGBuilder extends Builder {
                     boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml",
                             jenkinsGitUserName, jenkinsGitEmail);
                     if (updateRequired)
-                        listener.getLogger().println("[APMG] - Updated repository package.xml file.");
+                        listener.getLogger().println("[SMA] - Updated repository package.xml file.");
                 }
             }
 
             //Check to see if we need to generateManifest the build file
             if(getGenerateAntEnabled()){
-                APMGUtility.generate(deployStage.getPath(), getRunUnitTests(), git.getContents());
-                listener.getLogger().println("[APMG] - Created build file");
+                String buildFile = SMAUtility.generate(deployStage.getPath(), getRunUnitTests(),
+                        getValidateEnabled(), git.getContents());
+                listener.getLogger().println("[SMA] - Created build file.");
+                parameterValues.add(new StringParameterValue("SMA_BUILD", buildFile));
             }
 
             build.addAction(new ParametersAction(parameterValues));
@@ -162,7 +165,7 @@ public class APMGBuilder extends Builder {
     }
 
     /**
-     * Descriptor for {@link APMGBuilder}. Used as a singleton.
+     * Descriptor for {@link SMABuilder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
@@ -184,7 +187,7 @@ public class APMGBuilder extends Builder {
          * This human readable name is used in the configuration screen.
          */
         public String getDisplayName() {
-            return "APMG";
+            return "Salesforce Migration Assistant";
         }
     }
 
@@ -211,5 +214,7 @@ public class APMGBuilder extends Builder {
     public boolean getForceInitialBuild() { return forceInitialBuild; }
 
     public boolean getRunUnitTests() { return runUnitTests; }
+
+    public boolean getValidateEnabled() { return validateEnabled; }
 }
 

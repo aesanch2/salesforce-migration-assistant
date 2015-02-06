@@ -11,6 +11,6 @@
     tags they use. Views are always organized according to its owner class,
     so it should be straightforward to find them.
   -->
-  <f:section title="APMG">
+  <f:section title="Salesforce Migration Assistant">
   </f:section>
 </j:jelly>

@@ -1,4 +1,4 @@
-package org.asu.apmg;
+package org.asu.sma;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -16,7 +16,7 @@ import java.util.Scanner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class APMGManifestGeneratorTest {
+public class SMAManifestGeneratorTest {
     
     private String testWorkspacePath;
     private File resultPackage, testWorkspace;
@@ -45,7 +45,7 @@ public class APMGManifestGeneratorTest {
         File testGitDiff = new File("src/test/resources/testDeletes.txt");
         ArrayList<String> testDiffs = read(testGitDiff);
 
-        APMGManifestGenerator.generateManifest(testDiffs, resultPackage.getPath(), true);
+        SMAManifestGenerator.generateManifest(testDiffs, resultPackage.getPath(), true);
 
         ArrayList<String> expectedOutput = read(expectedPackage);
         ArrayList<String> resultOutput = read(resultPackage);
@@ -60,7 +60,7 @@ public class APMGManifestGeneratorTest {
         File testGitDiff = new File("src/test/resources/testAddsMods.txt");
         ArrayList<String> testDiffs = read(testGitDiff);
 
-        APMGManifestGenerator.generateManifest(testDiffs, resultPackage.getPath(), false);
+        SMAManifestGenerator.generateManifest(testDiffs, resultPackage.getPath(), false);
 
         ArrayList<String> expectedOutput = read(expectedPackage);
         ArrayList<String> resultOutput = read(resultPackage);
@@ -80,24 +80,24 @@ public class APMGManifestGeneratorTest {
 
     @Test
     public void testGetPathToResource() throws Exception {
-        ClassLoader loader = APMGManifestGenerator.APMGMetadataXmlDocument.class.getClassLoader();
-        String expected = loader.getResource("org/asu/apmg/salesforceMetadata.xml").toString();
-        assertEquals(expected, APMGManifestGenerator.APMGMetadataXmlDocument.getPathToResource());
+        ClassLoader loader = SMAManifestGenerator.SMAMetadataXMLDocument.class.getClassLoader();
+        String expected = loader.getResource("org/asu/sma/salesforceMetadata.xml").toString();
+        assertEquals(expected, SMAManifestGenerator.SMAMetadataXMLDocument.getPathToResource());
     }
 
     @Test
     public void testGetAPIVersion() throws Exception {
         String API = "32.0";
-        assertEquals(API, APMGManifestGenerator.APMGMetadataXmlDocument.getAPIVersion());
+        assertEquals(API, SMAManifestGenerator.SMAMetadataXMLDocument.getAPIVersion());
     }
 
     @Test
     public void testGetDoc() throws Exception{
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dbBuilder = dbFactory.newDocumentBuilder();
-        Document doc = dbBuilder.parse("src/main/resources/org/asu/apmg/salesforceMetadata.xml");
+        Document doc = dbBuilder.parse("src/main/resources/org/asu/sma/salesforceMetadata.xml");
 
-        assertEquals(doc.toString(), APMGManifestGenerator.APMGMetadataXmlDocument.getDoc().toString());
+        assertEquals(doc.toString(), SMAManifestGenerator.SMAMetadataXMLDocument.getDoc().toString());
     }
 
     @Test
@@ -110,7 +110,7 @@ public class APMGManifestGeneratorTest {
         String path = "src/objects/";
 
         String gitData = "src/objects/Test.object";
-        APMGMetadataObject testMD = APMGManifestGenerator.APMGMetadataXmlDocument.createMetadataObject(gitData);
+        SMAMetadata testMD = SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject(gitData);
 
         assertEquals(extension, testMD.getExtension());
         assertEquals(container, testMD.getContainer());

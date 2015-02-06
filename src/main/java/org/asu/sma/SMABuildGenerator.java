@@ -1,4 +1,4 @@
-package org.asu.apmg;
+package org.asu.sma;
 
 import org.w3c.dom.*;
 
@@ -6,18 +6,27 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.util.ArrayList;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 /**
- * Created by anthony on 2/3/15.
+ * Utility class that generates the build XML file
+ * @author aesanch2
  */
-public class APMGBuildGenerator {
+public class SMABuildGenerator {
 
-    private static final Logger LOG = Logger.getLogger(APMGBuildGenerator.class.getName());
-    private static final ClassLoader loader = APMGBuildGenerator.class.getClassLoader();
+    private static final Logger LOG = Logger.getLogger(SMABuildGenerator.class.getName());
+    private static final ClassLoader loader = SMABuildGenerator.class.getClassLoader();
 
 
-    public static void generateBuildFile(String buildLocation, Boolean generateUnitTests, ArrayList<String> repoContents){
+    /**
+     * Generates an xml file for salesforce deployments. Can also generate unit tests for the default namespace.
+     * @param buildLocation
+     * @param generateUnitTests
+     * @param deployRoot
+     * @param repoContents
+     */
+    public static void generateBuildFile(String buildLocation, Boolean generateUnitTests,
+                                         Boolean validate, String deployRoot,
+                                         ArrayList<String> repoContents){
         try{
             //Create the build file
             DocumentBuilderFactory antFactory = DocumentBuilderFactory.newInstance();
@@ -38,7 +47,7 @@ public class APMGBuildGenerator {
             projectRoot.appendChild(environment);
 
             //Set up the taskdef for the salesforce antlib
-            String pathToAntLib = loader.getResource("org/asu/apmg/ant-salesforce.jar").getPath();
+            String pathToAntLib = loader.getResource("org/asu/sma/ant-salesforce.jar").getPath();
             Element salesforceAntLib = build.createElement("taskdef");
             salesforceAntLib.setAttribute("resource", "com/salesforce/antlib.xml");
             salesforceAntLib.setAttribute("classpath", pathToAntLib);
@@ -46,9 +55,9 @@ public class APMGBuildGenerator {
             projectRoot.appendChild(salesforceAntLib);
 
             //Create the target
-            Comment targetComment = build.createComment("APMG Generated target");
+            Comment targetComment = build.createComment("SMA Generated target");
             Element target = build.createElement("target");
-            target.setAttribute("name", "apmg");
+            target.setAttribute("name", "sma");
             projectRoot.appendChild(targetComment);
             projectRoot.appendChild(target);
 
@@ -59,18 +68,21 @@ public class APMGBuildGenerator {
             sfDeploy.setAttribute("serverurl", "${sf.serverurl}");
             sfDeploy.setAttribute("maxPoll", "20");
             sfDeploy.setAttribute("pollWaitMillis", "30000");
-            sfDeploy.setAttribute("deployRoot", buildLocation);
-            sfDeploy.setAttribute("checkOnly", "true");
+            sfDeploy.setAttribute("deployRoot", deployRoot);
+            if(validate){
+                sfDeploy.setAttribute("checkOnly", "true");
+            }else {
+                sfDeploy.setAttribute("checkOnly", "false");
+            }
 
             //If indicated, create the test suite
             if(generateUnitTests){
                 //String testKey = new String("(Test|test)");
-                APMGManifestGenerator.APMGMetadataXmlDocument.initDocument();
+                SMAManifestGenerator.SMAMetadataXMLDocument.initDocument();
                 String testPattern = ".*[T|t]est.*";
                 for (String file : repoContents){
                     if(file.matches(testPattern)){
-                        APMGMetadataObject testClass = APMGManifestGenerator.
-                                APMGMetadataXmlDocument.createMetadataObject(file);
+                        SMAMetadata testClass = SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject(file);
                         if(testClass.hasMetaxml()){
                             Element runTest = build.createElement("runTest");
                             runTest.setTextContent(testClass.getMember());
@@ -82,7 +94,9 @@ public class APMGBuildGenerator {
             target.appendChild(sfDeploy);
 
             //Write the build file
-            APMGUtility.writeXML(buildLocation, build);
+            SMAUtility.writeXML(buildLocation, build);
+
+            SMAUtility.removeFirstLine(buildLocation);
         }catch(Exception e){
             e.printStackTrace();
         }

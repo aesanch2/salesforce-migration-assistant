@@ -1,4 +1,4 @@
-package org.asu.apmg;
+package org.asu.sma;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -25,14 +25,14 @@ import java.util.logging.Logger;
  * Wrapper for git interactions using jGit.
  * @author aesanch2
  */
-public class APMGGit {
+public class SMAGit {
 
     private Git git;
     private Repository repository;
     private ArrayList<String> additions, deletions, modificationsOld, modificationsNew, contents;
     private String prevCommit, curCommit;
 
-    private static final Logger LOG = Logger.getLogger(APMGGit.class.getName());
+    private static final Logger LOG = Logger.getLogger(SMAGit.class.getName());
 
     /**
      * Creates an APMGGit instance for the initial commit and/or initial build.
@@ -40,7 +40,7 @@ public class APMGGit {
      * @param curCommit The current commit.
      * @throws Exception
      */
-    public APMGGit(String pathToRepo, String curCommit) throws Exception{
+    public SMAGit(String pathToRepo, String curCommit) throws Exception{
         File repoDir = new File(pathToRepo);
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         repository = builder.setGitDir(repoDir).readEnvironment().build();
@@ -56,7 +56,7 @@ public class APMGGit {
      * @param prevCommit The previous commit.
      * @throws Exception
      */
-    public APMGGit(String pathToRepo, String curCommit, String prevCommit) throws Exception{
+    public SMAGit(String pathToRepo, String curCommit, String prevCommit) throws Exception{
         File repoDir = new File(pathToRepo);
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         repository = builder.setGitDir(repoDir).readEnvironment().build();
@@ -125,7 +125,7 @@ public class APMGGit {
      * @param destDir The location of the rollback stage.
      * @throws Exception
      */
-    public void getPrevCommitFiles(ArrayList<APMGMetadataObject> members, String destDir) throws Exception{
+    public void getPrevCommitFiles(ArrayList<SMAMetadata> members, String destDir) throws Exception{
         ObjectId prevCommitId = repository.resolve(prevCommit);
 
         RevWalk revWalk = new RevWalk(repository);
@@ -133,7 +133,7 @@ public class APMGGit {
         RevTree tree = commit.getTree();
         TreeWalk treeWalk;
 
-        for(APMGMetadataObject file : members){
+        for(SMAMetadata file : members){
             treeWalk = new TreeWalk(repository);
             treeWalk.addTree(tree);
             treeWalk.setRecursive(true);
@@ -169,7 +169,7 @@ public class APMGGit {
      */
     public boolean updatePackageXML(String manifestLocation, String userName, String userEmail) throws Exception{
         if (!getAdditions().isEmpty() || !getDeletions().isEmpty()){
-            APMGManifestGenerator.generateManifest(getContents(), manifestLocation, false);
+            SMAManifestGenerator.generateManifest(getContents(), manifestLocation, false);
 
             //Commit the updated package.xml file to the repository
             git.add().addFilepattern("src/package.xml").call();

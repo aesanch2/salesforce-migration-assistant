@@ -6,8 +6,8 @@
     <version>1.590</version><!-- which version of Jenkins is this plugin built against? Users must have at least this Jenkins version to use this plugin. -->
   </parent>
 
-  <artifactId>apmg</artifactId>
-  <name>Automated Package Manifest Generator</name>
+  <artifactId>sma</artifactId>
+  <name>Salesforce Migration Assistant</name>
   <version>1.0</version>
   <packaging>hpi</packaging>
 

@@ -1,10 +1,10 @@
-package org.asu.apmg;
+package org.asu.sma;
 
 /**
  * Creates an object representation of a Salesforce Metadata file.
  * @author aesanch2
  */
-public class APMGMetadataObject {
+public class SMAMetadata {
     private String extension;
     private String container;
     private String member;
@@ -25,8 +25,8 @@ public class APMGMetadataObject {
      * @param valid
      * @param metaxml
      */
-    public APMGMetadataObject(String extension, String container, String member,
-                              String metadataType, String path, boolean destructible, boolean valid, boolean metaxml) {
+    public SMAMetadata(String extension, String container, String member,
+                       String metadataType, String path, boolean destructible, boolean valid, boolean metaxml) {
         this.extension = extension;
         this.container = container;
         this.member = member;

@@ -1,4 +1,4 @@
-package org.asu.apmg;
+package org.asu.sma;
 
 import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Document;
@@ -20,9 +20,9 @@ import java.util.logging.Logger;
  * Utility class that generates the package manifest XML file.
  * @author aesanch2
  */
-public class APMGManifestGenerator {
+public class SMAManifestGenerator {
 
-    private static final Logger LOG = Logger.getLogger(APMGManifestGenerator.class.getName());
+    private static final Logger LOG = Logger.getLogger(SMAManifestGenerator.class.getName());
 
     /**
      * Generates an xml file that describes the metadata that is to be deployed in this job.
@@ -31,10 +31,10 @@ public class APMGManifestGenerator {
      * @param isDestructiveChange
      * @return The ArrayList of APMGMetadataObjects that are to be deployed in this job.
      */
-    public static ArrayList<APMGMetadataObject> generateManifest(ArrayList<String> memberList,
+    public static ArrayList<SMAMetadata> generateManifest(ArrayList<String> memberList,
                                                                  String manifestLocation,
                                                                  Boolean isDestructiveChange){
-        ArrayList<APMGMetadataObject> contents = new ArrayList<APMGMetadataObject>();
+        ArrayList<SMAMetadata> contents = new ArrayList<SMAMetadata>();
 
         try {
             //Create the manifest
@@ -52,12 +52,12 @@ public class APMGManifestGenerator {
             XPath xpath = pathFactory.newXPath();
             XPathExpression query;
             
-            APMGMetadataObject metadata;
+            SMAMetadata metadata;
             Boolean typeExists;
             String xpathExpr;
-            APMGMetadataXmlDocument.initDocument();
+            SMAMetadataXMLDocument.initDocument();
             for(String repoItem : memberList){
-                metadata = APMGMetadataXmlDocument.createMetadataObject(repoItem);
+                metadata = SMAMetadataXMLDocument.createMetadataObject(repoItem);
 
                 //Handle unknown members
                 if(metadata.getMetadataType().equals("Invalid")) {
@@ -123,13 +123,13 @@ public class APMGManifestGenerator {
 
 
             //Add the version element to the manifest
-            String version = APMGMetadataXmlDocument.getAPIVersion();
+            String version = SMAMetadataXMLDocument.getAPIVersion();
             Element verElement = manifest.createElement("version");
             verElement.setTextContent(version);
             rootElement.appendChild(verElement);
 
             //Write the manifest
-            APMGUtility.writeXML(manifestLocation, manifest);
+            SMAUtility.writeXML(manifestLocation, manifest);
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -141,9 +141,9 @@ public class APMGManifestGenerator {
      * Sub-class for the salesforceMetadata.xml document that contains Salesforce Metadata API information.
      * @author aesanch2
      */
-    public static final class APMGMetadataXmlDocument {
-        private static final ClassLoader loader = APMGManifestGenerator.APMGMetadataXmlDocument.class.getClassLoader();
-        private static String pathToResource = loader.getResource("org/asu/apmg/salesforceMetadata.xml").toString();
+    public static final class SMAMetadataXMLDocument {
+        private static final ClassLoader loader = SMAManifestGenerator.SMAMetadataXMLDocument.class.getClassLoader();
+        private static String pathToResource = loader.getResource("org/asu/sma/salesforceMetadata.xml").toString();
         private static Document doc;
 
         /**
@@ -200,7 +200,7 @@ public class APMGManifestGenerator {
          * @return An APMGMetadataObject representation of a file.
          * @throws Exception
          */
-        public static APMGMetadataObject createMetadataObject(String filename) throws Exception{
+        public static SMAMetadata createMetadataObject(String filename) throws Exception{
             String container = "empty";
             String metadataType = "Invalid";
             boolean destructible = false;
@@ -237,7 +237,7 @@ public class APMGManifestGenerator {
                 }
             }
 
-            return new APMGMetadataObject(extension, container, member, metadataType,
+            return new SMAMetadata(extension, container, member, metadataType,
                     path, destructible, valid, metaxml);
         }
     }

@@ -1,4 +1,4 @@
-package org.asu.apmg;
+package org.asu.sma;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -10,7 +10,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -20,10 +19,15 @@ import java.util.zip.ZipOutputStream;
  * Utility class for performing a variety of tasks in APMG.
  * @author aesanch2
  */
-public class APMGUtility {
+public class SMAUtility {
 
-    private static final Logger LOG = Logger.getLogger(APMGUtility.class.getName());
+    private static final Logger LOG = Logger.getLogger(SMAUtility.class.getName());
 
+    /**
+     * Writes an XML Document to disk.
+     * @param destination
+     * @param xmlToWrite
+     */
     public static void writeXML(String destination, Document xmlToWrite){
         try {
             //Prepare the workspace for the manifest
@@ -41,8 +45,6 @@ public class APMGUtility {
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
             transformer.transform(source, result);
 
-            removeFirstLine(destination);
-
             LOG.info("Saved xml file to " + destination);
         }catch(Exception e){
             e.printStackTrace();
@@ -50,7 +52,12 @@ public class APMGUtility {
 
     }
 
-    private static void removeFirstLine(String fileName) throws IOException {
+    /**
+     * Removes the first line from a file.
+     * @param fileName
+     * @throws IOException
+     */
+    public static void removeFirstLine(String fileName) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(fileName, "rw");
         //Initial write position
         long writePosition = raf.getFilePointer();
@@ -78,9 +85,9 @@ public class APMGUtility {
      * @param destDir The destination to copy the members to.
      * @throws IOException
      */
-    public static void replicateMembers(ArrayList<APMGMetadataObject> members,
+    public static void replicateMembers(ArrayList<SMAMetadata> members,
                                  String sourceDir, String destDir) throws IOException{
-        for(APMGMetadataObject file : members){
+        for(SMAMetadata file : members){
             File source = new File(sourceDir + "/" + file.getPath() + file.getFullName());
             File destination = new File(destDir + "/" + file.getPath());
             if(!destination.exists()){
@@ -102,10 +109,20 @@ public class APMGUtility {
         }
     }
 
-    public static void generate(String destination, Boolean generateUnitTests, ArrayList<String> repoContents){
+    /**
+     * Helper method that generates the build xml file.
+     * @param destination
+     * @param generateUnitTests
+     * @param repoContents
+     */
+    public static String generate(String destination, Boolean generateUnitTests,
+                                  Boolean validate, ArrayList<String> repoContents){
         String buildFile = destination + "/build/build.xml";
+        String deployRoot = destination + "/src";
 
-        APMGBuildGenerator.generateBuildFile(buildFile, generateUnitTests, repoContents);
+        SMABuildGenerator.generateBuildFile(buildFile, generateUnitTests, validate, deployRoot, repoContents);
+
+        return buildFile;
     }
 
     /**
@@ -115,18 +132,18 @@ public class APMGUtility {
      * @param destination The destination of the package manifest file.
      * @return An ArrayList of the APMGMetadataObjects that were included in this commit.
      */
-    public static ArrayList<APMGMetadataObject> generate(ArrayList<String> destructiveChanges,
+    public static ArrayList<SMAMetadata> generate(ArrayList<String> destructiveChanges,
                                                                   ArrayList<String> changes,
                                                                   String destination){
         Boolean isDestructiveChange = true;
         //Generate the destructiveChanges.xml file
         if(!destructiveChanges.isEmpty()){
             String destructiveChangesFile = destination + "/src/destructiveChanges.xml";
-            APMGManifestGenerator.generateManifest(destructiveChanges, destructiveChangesFile, isDestructiveChange);
+            SMAManifestGenerator.generateManifest(destructiveChanges, destructiveChangesFile, isDestructiveChange);
         }
         String packageManifest= destination + "/src/package.xml";
 
-        return APMGManifestGenerator.generateManifest(changes, packageManifest, !isDestructiveChange);
+        return SMAManifestGenerator.generateManifest(changes, packageManifest, !isDestructiveChange);
     }
 
     /**

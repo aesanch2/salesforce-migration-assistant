@@ -1,4 +1,4 @@
-package org.asu.apmg;
+package org.asu.sma;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -19,10 +19,10 @@ import java.util.ArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class APMGGitTest {
+public class SMAGitTest {
 
     private Repository repository;
-    private APMGGit git;
+    private SMAGit git;
     private File addition, modification, deletion, localPath;
     private String oldSha, newSha, gitDir;
 
@@ -117,7 +117,7 @@ public class APMGGitTest {
         oldTree.reset(reader, oldHead);
         newTree.reset(reader, newHead);
 
-        git = new APMGGit(gitDir, newSha, oldSha);
+        git = new SMAGit(gitDir, newSha, oldSha);
 
         ArrayList<String> deletedContents = git.getDeletions();
         ArrayList<String> newContents = git.getNewChangeSet();
@@ -136,7 +136,7 @@ public class APMGGitTest {
         expectedContents.add("src/pages/modifyThis.page");
         expectedContents.add("src/triggers/addThis.trigger");
 
-        git = new APMGGit(gitDir, newSha);
+        git = new SMAGit(gitDir, newSha);
 
         ArrayList<String> contents = git.getNewChangeSet();
 
@@ -153,7 +153,7 @@ public class APMGGitTest {
         expectedContents.add("src/class/deleteThis.cls");
         expectedContents.add("src/pages/modifyThis.page");
 
-        git = new APMGGit(gitDir, newSha, oldSha);
+        git = new SMAGit(gitDir, newSha, oldSha);
 
         ArrayList<String> contents = git.getOldChangeSet();
 
@@ -166,18 +166,18 @@ public class APMGGitTest {
      */
     @Test
     public void testGetPrevCommitFiles() throws Exception{
-        git = new APMGGit(gitDir, newSha, oldSha);
+        git = new SMAGit(gitDir, newSha, oldSha);
 
         ArrayList<String> destructiveChanges = git.getAdditions();
         ArrayList<String> changes = git.getOldChangeSet();
         String destination = localPath.getPath() + "/rollback";
 
-        ArrayList<APMGMetadataObject> results = APMGUtility.generateManifests(destructiveChanges, changes,
+        ArrayList<SMAMetadata> results = SMAUtility.generate(destructiveChanges, changes,
                 destination);
 
         git.getPrevCommitFiles(results, destination);
 
-        for(APMGMetadataObject result : results){
+        for(SMAMetadata result : results){
             File rollbackVersion = new File(destination + "/" + result.getPath() + result.getFullName());
             assertTrue(rollbackVersion.exists());
         }
@@ -189,7 +189,7 @@ public class APMGGitTest {
      */
     @Test
     public void testCommitPackageXML() throws Exception{
-        git = new APMGGit(gitDir, newSha, oldSha);
+        git = new SMAGit(gitDir, newSha, oldSha);
 
         assertTrue(git.updatePackageXML(localPath.getPath() + "/src/package.xml", "Test Guy", "testguy@example.net"));
     }
