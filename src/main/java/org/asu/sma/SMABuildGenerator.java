@@ -38,7 +38,7 @@ public class SMABuildGenerator {
             projectRoot.setAttribute("xmlns:sf", "antlib:com.salesforce");
             projectRoot.setAttribute("basedir", ".");
             projectRoot.setAttribute("default", "build");
-            projectRoot.setAttribute("name", "APMG Build File");
+            projectRoot.setAttribute("name", "SMA Build File");
             build.appendChild(projectRoot);
 
             //Set the properties
@@ -47,7 +47,7 @@ public class SMABuildGenerator {
             projectRoot.appendChild(environment);
 
             //Set up the taskdef for the salesforce antlib
-            String pathToAntLib = loader.getResource("org/asu/sma/ant-salesforce.jar").getPath();
+            String pathToAntLib = "/WEB-INF/lib/ant-salesforce.jar";
             Element salesforceAntLib = build.createElement("taskdef");
             salesforceAntLib.setAttribute("resource", "com/salesforce/antlib.xml");
             salesforceAntLib.setAttribute("classpath", pathToAntLib);
