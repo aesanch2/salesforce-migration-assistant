@@ -1,4 +1,4 @@
-# Automated Package Manifest Generator
+# Salesforce Migration Assistant
 
 This Jenkins plugin generates a Salesforce package manifest file (``package.xml``) based on the differences
 between two commits in Git, copies the added/modified files to a 'deployment stage' in the Jenkins' project workspace,
@@ -11,6 +11,11 @@ the job's build directory for that build (e.g. ``/var/lib/jenkins/build/buildnum
 
 The plugin also has support for keeping your remote repository's version of ``package.xml`` up to date with the latest
 changes. See Project Configuration for more details.
+
+The plugin also has support for dynamically generating the ant build.xml file associated with the Force.com Migration
+Tool. The build.xml file can also generate the unit tests associated with the code associated in your default namespace
+i.e. no managed package unit tests will be run in non-production environments. See Project Configuration for more
+details. The ant-salesforce.jar is included with this plugin.
 
 ### Supported Metadata
 The following metadata types are supported in this release:
@@ -90,17 +95,31 @@ plan the contents of your repository accordingly.
 ### Project Configuration
 * Create a new job.
 * Setup your Git SCM of choice.
-* Add ``APMG`` as a Build step.
-    * Check whether you want to let APMG generate rollback packages.
-    * Check whether you want to let APMG update your repository's package manifest.
+* Add ``Salesforce Migration Assistant`` as a Build step.
+    * Check whether you want SMA to generate a package manifest file.
+        * Check whether you want to let SMA generate rollback packages.
+        * Check whether you want to let SMA update your repository's package manifest.
+    * Check whether you want SMA to generate a build file.
+        * Check whether you want SMA validate this build only.
+        * Check whether you want SMA to generate and run unit tests for code in your default namespace.
 * Add ``Invoke Ant`` as a Build step.
-    * You can specify anything you want for your ANT job, using the ANT migration tool from Salesforce.
-    * You should point your deployRoot to ``(path)/apmg/src``.
+    * If you enable SMA to generate a build file, set the following properties:
+        * Set ``sma`` as the Ant Target.
+        * Set build file to ``$SMA_BUILD``.
+        * Set the following ant properties:
+            * ``sf.serverurl='the target environment's url'``
+            * ``sf.username='the username and target environment'``
+            * ``sf.password='the API password for the user listed above'``
 * Add ``Git Publisher`` as a Post-build Action.
     * Check ``Push Only If Build Succeeds``.
     * You can setup any other configuration items in this action as you see fit.
 
 ### Changelog
+
+#### -> 1.1
+* Rename plugin
+* Generate an Ant build.xml file
+* Run unit tests for default namespace code i.e. no managed package tests
 
 #### -> 1.0
 * Initial Release
