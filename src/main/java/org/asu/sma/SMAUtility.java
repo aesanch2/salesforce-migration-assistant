@@ -116,11 +116,11 @@ public class SMAUtility {
      * @param repoContents
      */
     public static String generate(String destination, Boolean generateUnitTests,
-                                  Boolean validate, ArrayList<String> repoContents){
+                                  Boolean validate, ArrayList<String> repoContents, String jenkinsHome){
         String buildFile = destination + "/build/build.xml";
         String deployRoot = destination + "/src";
 
-        SMABuildGenerator.generateBuildFile(buildFile, generateUnitTests, validate, deployRoot, repoContents);
+        SMABuildGenerator.generateBuildFile(buildFile, generateUnitTests, validate, deployRoot, repoContents, jenkinsHome + "/plugins/sma");
 
         return buildFile;
     }

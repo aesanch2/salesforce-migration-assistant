@@ -17,6 +17,7 @@ public class SMABuildGeneratorTest {
     private String testWorkspacePath;
     private ArrayList<String> testContents;
     private File resultBuild, testWorkspace;
+    private static final ClassLoader loader = SMABuildGeneratorTest.class.getClassLoader();
 
     @Before
     public void setUp() throws Exception {
@@ -44,8 +45,10 @@ public class SMABuildGeneratorTest {
 
     @Test
     public void testGenerate() throws Exception {
+
+
         SMABuildGenerator.generateBuildFile(resultBuild.getPath(), true, true,
-                testWorkspacePath + "/src", testContents);
+                testWorkspacePath + "/src", testContents, "");
 
         ArrayList<String> output = read(resultBuild);
         System.out.println(output);

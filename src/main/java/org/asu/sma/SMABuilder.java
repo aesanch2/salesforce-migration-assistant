@@ -142,7 +142,7 @@ public class SMABuilder extends Builder {
             //Check to see if we need to generateManifest the build file
             if(getGenerateAntEnabled()){
                 String buildFile = SMAUtility.generate(deployStage.getPath(), getRunUnitTests(),
-                        getValidateEnabled(), git.getContents());
+                        getValidateEnabled(), git.getContents(), jenkinsHome);
                 listener.getLogger().println("[SMA] - Created build file.");
                 parameterValues.add(new StringParameterValue("SMA_BUILD", buildFile));
             }

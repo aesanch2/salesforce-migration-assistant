@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 public class SMABuildGenerator {
 
     private static final Logger LOG = Logger.getLogger(SMABuildGenerator.class.getName());
-    private static final ClassLoader loader = SMABuildGenerator.class.getClassLoader();
 
 
     /**
@@ -26,7 +25,8 @@ public class SMABuildGenerator {
      */
     public static void generateBuildFile(String buildLocation, Boolean generateUnitTests,
                                          Boolean validate, String deployRoot,
-                                         ArrayList<String> repoContents){
+                                         ArrayList<String> repoContents,
+                                         String jenkinsPluginHome){
         try{
             //Create the build file
             DocumentBuilderFactory antFactory = DocumentBuilderFactory.newInstance();
@@ -47,7 +47,7 @@ public class SMABuildGenerator {
             projectRoot.appendChild(environment);
 
             //Set up the taskdef for the salesforce antlib
-            String pathToAntLib = "/WEB-INF/lib/ant-salesforce.jar";
+            String pathToAntLib = jenkinsPluginHome + "/WEB-INF/lib/ant-salesforce.jar";
             Element salesforceAntLib = build.createElement("taskdef");
             salesforceAntLib.setAttribute("resource", "com/salesforce/antlib.xml");
             salesforceAntLib.setAttribute("classpath", pathToAntLib);
