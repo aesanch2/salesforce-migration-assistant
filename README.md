@@ -13,9 +13,11 @@ The plugin also has support for keeping your remote repository's version of ``pa
 changes. See Project Configuration for more details.
 
 The plugin also has support for dynamically generating the ant build.xml file associated with the Force.com Migration
-Tool. The build.xml file can also generate the unit tests associated with the code associated in your default namespace
-i.e. no managed package unit tests will be run in non-production environments. See Project Configuration for more
-details. The ant-salesforce.jar is included with this plugin.
+Tool. The plugin can also add runTest descriptors in build.xml to run the unit tests associated with the code in your
+repository i.e. no managed package unit tests will be run in non-production environments. See Project Configuration for
+more details.
+
+This plugin supports v29.0 of the Salesforce Metadata API. The ant-salesforce.jar is included with this plugin.
 
 ### Supported Metadata
 The following metadata types are supported in this release:
@@ -82,11 +84,15 @@ It should be noted that any problems that are traditionally encountered with the
 certain metadata types (e.g. CustomObjects, Profiles, etc.) will not be solved with this tool. My suggestion would be to
 plan the contents of your repository accordingly.
 
+### Requirements
+* This plugin was built on Linux, so it should work correctly with any popular distro. Windows hasn't been tested.
+* Your SCM should be Git. This plugin will not work with any other SCMs.
+
 ### Required Jenkins Plugins
 * git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 
 ### Pre-installation
-* You should have some kind of Git repository that Jenkins has access to retrieve the supported Salesforce Metadata from.
+* You should have some kind of Git repository that Jenkins has access to retrieve the supported Salesforce Metadata.
 
 ### Installation
 * Install the plugin.
@@ -128,6 +134,7 @@ plan the contents of your repository accordingly.
 * Create a deployment package in the job's workspace
 * Create an updated version of package.xml if necessary
 * Allow user to force initial build/commit behavior for a job at will
+* Support for Metadata API v29.0
 
 ### Licensing
 
