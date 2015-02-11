@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<version API="32.0">
+    <extension name="app">
+        <metadata>CustomApplication</metadata>
+        <container>applications</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="appMenu">
+        <metadata>AppMenu</metadata>
+        <container>appMenus</container>
+        <destructible>false</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="approvalProcess">
+        <metadata>ApprovalProcess</metadata>
+        <container>approvalProcesses</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="assignmentRules">
+        <metadata>AssignmentRule</metadata>
+        <container>assignmentRules</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="authprovider">
+        <metadata>AuthProvider</metadata>
+        <container>authproviders</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="autoResponseRules">
+        <metadata>AutoResponseRule</metadata>
+        <container>autoResponseRules</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="callCenter">
+        <metadata>CallCenter</metadata>
+        <container>callCenters</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="community">
+        <metadata>Community</metadata>
+        <container>communities</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="cls">
+        <metadata>ApexClass</metadata>
+        <container>classes</container>
+        <destructible>true</destructible>
+		<metaxml>true</metaxml>
+    </extension>
+    <extension name="customPermission">
+        <metadata>CustomPermission</metadata>
+        <container>customPermissions</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="component">
+        <metadata>ApexComponent</metadata>
+        <container>components</container>
+        <destructible>true</destructible>
+		<metaxml>true</metaxml>
+    </extension>
+    <extension name="connectedapp">
+        <metadata>ConnectedApp</metadata>
+        <container>connectedapps</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="customApplicationComponent">
+        <metadata>CustomApplicationComponent</metadata>
+        <container>customApplicationComponents</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="dashboard">
+        <metadata>Dashboard</metadata>
+        <container>dashboards</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="datacategorygroup">
+        <metadata>DataCategoryGroups</metadata>
+        <container>datacategorygroups</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="document">
+        <metadata>Document</metadata>
+        <container>documents</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="email">
+        <metadata>EmailTemplate</metadata>
+        <container>emails</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="entitlementProcess">
+        <metadata>EntitlementProcess</metadata>
+        <container>entitlementProcesses</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="escalationRule">
+        <metadata>EscalationRules</metadata>
+        <container>escalationRules</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="flexipage">
+        <metadata>FlexiPage</metadata>
+        <container>flexipages</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="flow">
+        <metadata>Flow</metadata>
+        <container>flow</container>
+    </extension>
+    <extension name="dataSource">
+        <metadata>ExternalDataSource</metadata>
+        <container>dataSources</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="group">
+        <metadata>Group</metadata>
+        <container>groups</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="homePageComponent">
+        <metadata>HomePageComponent</metadata>
+        <container>homepagecomponents</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="homePageLayout">
+        <metadata>HomePageLayout</metadata>
+        <container>homepageLayouts</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="labels">
+        <metadata>CustomLabels</metadata>
+        <container>labels</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="layout">
+        <metadata>Layout</metadata>
+        <container>layouts</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="letter">
+        <metadata>Letterhead</metadata>
+        <container>letterhead</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="liveChatAgentConfig">
+        <metadata>LiveChatAgentConfig</metadata>
+        <container>liveChatAgentConfigs</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="liveChatButton">
+        <metadata>LiveChatButton</metadata>
+        <container>liveChatButtons</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="liveChatDeployment">
+        <metadata>LiveChatDeployment</metadata>
+        <container>liveChatDeployments</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="milestoneType">
+        <metadata>Milestonetype</metadata>
+        <container>milestonetypes</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="network">
+        <metadata>Network</metadata>
+        <container>networks</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="object">
+        <metadata>CustomObject</metadata>
+        <container>objects</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="objectTranslation">
+        <metadata>CustomObjectTranslation</metadata>
+        <container>objectTranslations</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="page">
+        <metadata>ApexPage</metadata>
+        <container>pages</container>
+        <destructible>true</destructible>
+		<metaxml>true</metaxml>
+    </extension>
+    <extension name="permissionset">
+        <metadata>PermissionSet</metadata>
+        <container>permissionsets</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="portal">
+        <metadata>Portal</metadata>
+        <container>portals</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="postTemplate">
+        <metadata>PostTemplate</metadata>
+        <container>postTemplates</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="profile">
+        <metadata>Profile</metadata>
+        <container>profiles</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="queue">
+        <metadata>Queue</metadata>
+        <container>queues</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="quickAction">
+        <metadata>QuickAction</metadata>
+        <container>quickActions</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="remoteSite">
+        <metadata>RemoteSite</metadata>
+        <container>remoteSiteSettings</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="report">
+        <metadata>Reports</metadata>
+        <container>reports</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="reporttype">
+        <metadata>ReportType</metadata>
+        <container>reporttype</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="role">
+        <metadata>Role</metadata>
+        <container>roles</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="samlssoconfig">
+        <metadata>SamlSsoConfig</metadata>
+        <container>samlssoconfigs</container>
+        <destructible>false</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="settings">
+        <metadata>Settings</metadata>
+        <container>settings</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="sharingSet">
+        <metadata>SharingSet</metadata>
+        <container>sharingSets</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="site">
+        <metadata>CustomSite</metadata>
+        <container>sites</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="skills">
+        <metadata>Skill</metadata>
+        <container>skills</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="territory">
+        <metadata>Territory</metadata>
+        <container>territories</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="translation">
+        <metadata>Translation</metadata>
+        <container>translations</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="trigger">
+        <metadata>ApexTrigger</metadata>
+        <container>triggers</container>
+        <destructible>true</destructible>
+		<metaxml>true</metaxml>
+    </extension>
+    <extension name="tab">
+        <metadata>CustomTab</metadata>
+        <container>tabs</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="resource">
+        <metadata>StaticResource</metadata>
+        <container>staticresources</container>
+        <destructible>true</destructible>
+		<metaxml>true</metaxml>
+    </extension>
+    <extension name="weblink">
+        <metadata>CustomPageWeblink</metadata>
+        <container>weblinks</container>
+        <destructible>true</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <extension name="workflow">
+        <metadata>Workflow</metadata>
+        <container>workflows</container>
+        <destructible>false</destructible>
+		<metaxml>false</metaxml>
+    </extension>
+    <!-- Tricky MD. Not supported (...yet)
+    <extension name="SharingRules">
+        <metadata>.sharingRule</metadata>
+        <container>customObjectSharingRules</container>
+    </extension>
+    <!-->
+</version>
