@@ -4,24 +4,24 @@
             <f:optionalBlock name="generateManifests"
                              checked="${instance.generateManifests}"
                              title="Generate manifest file">
-                <f:entry field="rollbackEnabled">
-                    <f:checkbox title="Enable rollback package creation"/>
+                <f:entry title="Enable rollback package creation" field="rollbackEnabled">
+                    <f:checkbox/>
                 </f:entry>
-                <f:entry field="updatePackageEnabled">
-                    <f:checkbox title="Update remote's package manifest"/>
+                <f:entry title="Update remote's package manifest" field="updatePackageEnabled">
+                    <f:checkbox/>
                 </f:entry>
-                <f:entry field="forceInitialBuild">
-                    <f:checkbox title="Force initial build"/>
+                <f:entry title="Force initial build" field="forceInitialBuild">
+                    <f:checkbox/>
                 </f:entry>
             </f:optionalBlock>
             <f:optionalBlock name="generateAntEnabled"
                              checked="${instance.generateAntEnabled}"
                              title="Generate build file">
-                <f:entry field="validateEnabled">
-                    <f:checkbox title="Validate only"/>
+                <f:entry title="Validate only" field="validateEnabled">
+                    <f:checkbox/>
                 </f:entry>
-                <f:entry field="runUnitTests">
-                    <f:checkbox title="Run unit tests"/>
+                <f:entry title="Run unit tests" field="runUnitTests">
+                    <f:checkbox/>
                 </f:entry>
             </f:optionalBlock>
         </table>

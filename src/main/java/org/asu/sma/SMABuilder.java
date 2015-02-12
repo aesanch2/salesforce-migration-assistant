@@ -9,6 +9,7 @@ import hudson.tasks.Builder;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,11 +21,14 @@ import java.util.List;
 public class SMABuilder extends Builder {
 
     private SMAGit git;
-    private boolean rollbackEnabled, updatePackageEnabled,
-            forceInitialBuild, runUnitTests, validateEnabled;
-    private JSONObject generateManifests, generateAntEnabled;
+    private boolean rollbackEnabled;
+    private boolean updatePackageEnabled;
+    private boolean forceInitialBuild;
+    private boolean runUnitTests;
+    private boolean validateEnabled;
+    private JSONObject generateManifests;
+    private JSONObject generateAntEnabled;
 
-    // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public SMABuilder(JSONObject generateManifests,
                       JSONObject generateAntEnabled) {
@@ -164,12 +168,35 @@ public class SMABuilder extends Builder {
         return (DescriptorImpl)super.getDescriptor();
     }
 
+    public boolean getGenerateManifests() {
+        return (generateManifests == null);
+    }
+
+    public boolean getGenerateAntEnabled() {
+        return (generateAntEnabled == null);
+    }
+
+    public boolean getRollbackEnabled() { return rollbackEnabled; }
+
+    public boolean getUpdatePackageEnabled() { return updatePackageEnabled; }
+
+    public boolean getForceInitialBuild() { return forceInitialBuild; }
+
+    public boolean getRunUnitTests() { return runUnitTests; }
+
+    public boolean getValidateEnabled() { return validateEnabled; }
+
     /**
      * Descriptor for {@link SMABuilder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+
+        private String runTestRegex = ".*[T|t]est.*";
+        private String maxPoll = "20";
+        private String pollWait = "30000";
+
         /**
          * In order to load the persisted global configuration, you have to
          * call load() in the constructor.
@@ -189,32 +216,27 @@ public class SMABuilder extends Builder {
         public String getDisplayName() {
             return "Salesforce Migration Assistant";
         }
-    }
 
-    public boolean getGenerateManifests() {
-        if(generateManifests == null){
+        public String getRunTestRegex() {
+            return runTestRegex;
+        }
+
+        public String getMaxPoll() {
+            return maxPoll;
+        }
+
+        public String getPollWait() {
+            return pollWait;
+        }
+
+        public boolean configure(StaplerRequest request, JSONObject formData) throws FormException {
+            runTestRegex = formData.getString("runTestRegex");
+            maxPoll = formData.getString("maxPoll");
+            pollWait = formData.getString("pollWait");
+
+            save();
             return false;
-        }else{
-            return true;
         }
     }
-
-    public boolean getGenerateAntEnabled() {
-        if(generateAntEnabled == null){
-            return false;
-        }else{
-            return true;
-        }
-    }
-
-    public boolean getRollbackEnabled() { return rollbackEnabled; }
-
-    public boolean getUpdatePackageEnabled() { return updatePackageEnabled; }
-
-    public boolean getForceInitialBuild() { return forceInitialBuild; }
-
-    public boolean getRunUnitTests() { return runUnitTests; }
-
-    public boolean getValidateEnabled() { return validateEnabled; }
 }
 
