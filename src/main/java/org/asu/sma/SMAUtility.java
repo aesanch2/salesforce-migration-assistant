@@ -16,7 +16,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Utility class for performing a variety of tasks in APMG.
+ * Utility class for performing a variety of tasks in SMA.
  * @author aesanch2
  */
 public class SMAUtility {
@@ -110,40 +110,24 @@ public class SMAUtility {
     }
 
     /**
-     * Helper method that generates the build xml file.
-     * @param destination
-     * @param generateUnitTests
-     * @param repoContents
-     */
-    public static String generate(String destination, Boolean generateUnitTests,
-                                  Boolean validate, ArrayList<String> repoContents, String jenkinsHome){
-        String buildFile = destination + "/build/build.xml";
-        String deployRoot = destination + "/src";
-
-        SMABuildGenerator.generateBuildFile(buildFile, generateUnitTests, validate, deployRoot, repoContents, jenkinsHome + "/plugins/sma");
-
-        return buildFile;
-    }
-
-    /**
-     * Helper method that generates the package manifest files.
+     * Helper method that generates the salesforce manifest files.
      * @param destructiveChanges The list of items that were deleted from the repository in this commit.
      * @param changes The list of items that were added or modified from the repository in this commit.
-     * @param destination The destination of the package manifest file.
-     * @return An ArrayList of the APMGMetadataObjects that were included in this commit.
+     * @param deployStage The sma deployment directory.
+     * @return An ArrayList of the SMAMetadata objects that were included in this commit.
      */
     public static ArrayList<SMAMetadata> generate(ArrayList<String> destructiveChanges,
                                                                   ArrayList<String> changes,
-                                                                  String destination){
+                                                                  String deployStage){
         Boolean isDestructiveChange = true;
         //Generate the destructiveChanges.xml file
         if(!destructiveChanges.isEmpty()){
-            String destructiveChangesFile = destination + "/src/destructiveChanges.xml";
-            SMAManifestGenerator.generateManifest(destructiveChanges, destructiveChangesFile, isDestructiveChange);
+            SMAPackage destructiveManifest = new SMAPackage(deployStage, destructiveChanges, isDestructiveChange);
+            SMAManifestGenerator.generateManifest(destructiveManifest);
         }
-        String packageManifest= destination + "/src/package.xml";
-
-        return SMAManifestGenerator.generateManifest(changes, packageManifest, !isDestructiveChange);
+        //Generate the package.xml file
+        SMAPackage packageManifest = new SMAPackage(deployStage, changes, !isDestructiveChange);
+        return SMAManifestGenerator.generateManifest(packageManifest);
     }
 
     /**
@@ -152,9 +136,9 @@ public class SMAUtility {
      * @param buildTag The build tag created by Jenkins for this job.
      * @throws Exception
      */
-    public static String zipRollbackPackage(File rollbackDirectory,
-                                          String buildTag) throws Exception{
-        String zipFile = "/"+ FilenameUtils.getPath(rollbackDirectory.getPath()) + buildTag + "-APMGrollback.zip";
+    public static String zipRollbackPackage(File rollbackDirectory, String buildTag) throws Exception{
+        String zipFile = "/"+ FilenameUtils.getPath(rollbackDirectory.getPath()) + buildTag
+                + "-SMArollback.zip";
         String srcDir = rollbackDirectory.getPath();
 
         FileOutputStream fop = new FileOutputStream(zipFile);

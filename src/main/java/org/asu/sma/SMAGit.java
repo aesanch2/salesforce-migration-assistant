@@ -35,7 +35,7 @@ public class SMAGit {
     private static final Logger LOG = Logger.getLogger(SMAGit.class.getName());
 
     /**
-     * Creates an APMGGit instance for the initial commit and/or initial build.
+     * Creates an SMAGit instance for the initial commit and/or initial build.
      * @param pathToRepo The path to the git repository.
      * @param curCommit The current commit.
      * @throws Exception
@@ -50,7 +50,7 @@ public class SMAGit {
     }
 
     /**
-     * Creates an APMGGit instance for all other builds.
+     * Creates an SMAGit instance for all other builds.
      * @param pathToRepo The path to the git repository.
      * @param curCommit The current commit.
      * @param prevCommit The previous commit.
@@ -161,15 +161,16 @@ public class SMAGit {
 
     /**
      * Creates an updated package.xml file and commits it to the repository
-     * @param manifestLocation The location of the package manifest to be updated.
+     * @param workspace The workspace.
      * @param userName The user name of the committer.
      * @param userEmail The email of the committer.
      * @return A boolean value indicating whether an update was required or not.
      * @throws Exception
      */
-    public boolean updatePackageXML(String manifestLocation, String userName, String userEmail) throws Exception{
+    public boolean updatePackageXML(String workspace, String userName, String userEmail) throws Exception{
         if (!getAdditions().isEmpty() || !getDeletions().isEmpty()){
-            SMAManifestGenerator.generateManifest(getContents(), manifestLocation, false);
+            SMAPackage packageManifest = new SMAPackage(workspace, getContents(), false);
+            SMAManifestGenerator.generateManifest(packageManifest);
 
             //Commit the updated package.xml file to the repository
             git.add().addFilepattern("src/package.xml").call();

@@ -6,6 +6,7 @@ import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import hudson.util.ListBoxModel;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -26,12 +27,15 @@ public class SMABuilder extends Builder {
     private boolean forceInitialBuild;
     private boolean runUnitTests;
     private boolean validateEnabled;
+    private String sfUsername;
+    private String sfPassword;
+    private String sfServer;
     private JSONObject generateManifests;
     private JSONObject generateAntEnabled;
 
+
     @DataBoundConstructor
-    public SMABuilder(JSONObject generateManifests,
-                      JSONObject generateAntEnabled) {
+    public SMABuilder(JSONObject generateManifests, JSONObject generateAntEnabled) {
         this.generateManifests = generateManifests;
         if(generateManifests != null) {
             rollbackEnabled = Boolean.valueOf(generateManifests.get("rollbackEnabled").toString());
@@ -41,6 +45,9 @@ public class SMABuilder extends Builder {
 
         this.generateAntEnabled = generateAntEnabled;
         if(generateAntEnabled != null) {
+            sfUsername = generateAntEnabled.get("sfUsername").toString();
+            sfPassword = generateAntEnabled.get("sfPassword").toString();
+            sfServer = generateAntEnabled.get("sfServer").toString();
             validateEnabled = Boolean.valueOf(generateAntEnabled.get("validateEnabled").toString());
             runUnitTests = Boolean.valueOf(generateAntEnabled.get("runUnitTests").toString());
         }
@@ -80,7 +87,8 @@ public class SMABuilder extends Builder {
             File deployStage = new File(workspaceDirectory + "/sma");
             if(deployStage.exists()){
                 FileUtils.deleteDirectory(deployStage);
-            }deployStage.mkdirs();
+            }
+            deployStage.mkdirs();
 
             //Put the deployment stage location into the environment as a variable
             parameterValues = new ArrayList<ParameterValue>();
@@ -112,7 +120,7 @@ public class SMABuilder extends Builder {
 
                 //Check for rollback
                 if (getRollbackEnabled() && prevCommit != null){
-                    String rollbackDirectory = jenkinsHome + "/jobs/" + jobName + "/builds/" + buildNumber + "/rollback";
+                    String rollbackDirectory = jenkinsHome + "/jobs/" + jobName + "/builds/" + buildNumber + "/sma/rollback";
                     File rollbackStage = new File(rollbackDirectory);
                     if(rollbackStage.exists()){
                         FileUtils.deleteDirectory(rollbackStage);
@@ -136,7 +144,7 @@ public class SMABuilder extends Builder {
 
                 //Check to see if we need to update the repository's package.xml file
                 if(getUpdatePackageEnabled()){
-                    boolean updateRequired = git.updatePackageXML(workspaceDirectory + "/src/package.xml",
+                    boolean updateRequired = git.updatePackageXML(workspaceDirectory,
                             jenkinsGitUserName, jenkinsGitEmail);
                     if (updateRequired)
                         listener.getLogger().println("[SMA] - Updated repository package.xml file.");
@@ -145,8 +153,11 @@ public class SMABuilder extends Builder {
 
             //Check to see if we need to generateManifest the build file
             if(getGenerateAntEnabled()){
-                String buildFile = SMAUtility.generate(deployStage.getPath(), getRunUnitTests(),
-                        getValidateEnabled(), git.getContents(), jenkinsHome);
+                SMAPackage buildPackage = new SMAPackage(deployStage.getPath(), git.getContents(),
+                        jenkinsHome, getDescriptor().getRunTestRegex(), getDescriptor().getPollWait(),
+                        getDescriptor().getMaxPoll(), getRunUnitTests(), getValidateEnabled(),
+                        getSfUsername(), getSfPassword(), getSfServer());
+                String buildFile = SMABuildGenerator.generateBuildFile(buildPackage);
                 listener.getLogger().println("[SMA] - Created build file.");
                 parameterValues.add(new StringParameterValue("SMA_BUILD", buildFile));
             }
@@ -160,20 +171,18 @@ public class SMABuilder extends Builder {
         return true;
     }
 
-    // Overridden for better type safety.
-    // If your plugin doesn't really define any property on Descriptor,
-    // you don't have to do this.
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
-    }
-
     public boolean getGenerateManifests() {
-        return (generateManifests == null);
+        if(generateManifests == null)
+            return false;
+        else
+            return true;
     }
 
     public boolean getGenerateAntEnabled() {
-        return (generateAntEnabled == null);
+        if(generateAntEnabled == null)
+            return false;
+        else
+            return true;
     }
 
     public boolean getRollbackEnabled() { return rollbackEnabled; }
@@ -186,21 +195,24 @@ public class SMABuilder extends Builder {
 
     public boolean getValidateEnabled() { return validateEnabled; }
 
-    /**
-     * Descriptor for {@link SMABuilder}. Used as a singleton.
-     * The class is marked as public so that it can be accessed from views.
-     */
-    @Extension // This indicates to Jenkins that this is an implementation of an extension point.
+    public String getSfUsername() { return sfUsername; }
+
+    public String getSfServer() { return sfServer; }
+
+    public String getSfPassword() { return sfPassword; }
+
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl)super.getDescriptor();
+    }
+
+    @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
         private String runTestRegex = ".*[T|t]est.*";
         private String maxPoll = "20";
         private String pollWait = "30000";
 
-        /**
-         * In order to load the persisted global configuration, you have to
-         * call load() in the constructor.
-         */
         public DescriptorImpl() {
             load();
         }
@@ -210,9 +222,6 @@ public class SMABuilder extends Builder {
             return true;
         }
 
-        /**
-         * This human readable name is used in the configuration screen.
-         */
         public String getDisplayName() {
             return "Salesforce Migration Assistant";
         }
@@ -227,6 +236,13 @@ public class SMABuilder extends Builder {
 
         public String getPollWait() {
             return pollWait;
+        }
+
+        public ListBoxModel doFillSfServerItems(){
+            return new ListBoxModel(
+                    new ListBoxModel.Option("Production (https://login.salesforce.com)", "https://login.salesforce.com"),
+                    new ListBoxModel.Option("Sandbox (https://test.salesforce.com)", "https://test.salesforce.com")
+            );
         }
 
         public boolean configure(StaplerRequest request, JSONObject formData) throws FormException {

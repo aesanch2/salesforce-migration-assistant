@@ -16,7 +16,7 @@ import static org.junit.Assert.assertTrue;
 public class SMABuildGeneratorTest {
     private String testWorkspacePath;
     private ArrayList<String> testContents;
-    private File resultBuild, testWorkspace;
+    private File testWorkspace;
     private static final ClassLoader loader = SMABuildGeneratorTest.class.getClassLoader();
 
     @Before
@@ -34,8 +34,6 @@ public class SMABuildGeneratorTest {
         testContents.add("src/classes/Metadata_Test.cls");
         testContents.add("src/classes/Metadata_test_.cls");
         testContents.add("src/classes/Test_Metadata.cls-meta.xml");
-
-        resultBuild = new File(testWorkspace, "testBuild.xml");
     }
 
     @After
@@ -45,13 +43,21 @@ public class SMABuildGeneratorTest {
 
     @Test
     public void testGenerate() throws Exception {
+        String jenkinsHome = "/var/lib/jenkins";
+        String runTestRegex = ".*[T|t]est.*";
+        String pollWait = "30000";
+        String maxPoll = "20";
+        boolean generateUnitTests = true;
+        boolean validateOnly = true;
 
+        SMAPackage buildPackage = new SMAPackage(testWorkspacePath, testContents,
+                jenkinsHome, runTestRegex, pollWait, maxPoll, generateUnitTests, validateOnly,
+                "user@user.com.test", "${sf.password}", "Sandbox");
+        SMABuildGenerator.generateBuildFile(buildPackage);
 
-        SMABuildGenerator.generateBuildFile(resultBuild.getPath(), true, true,
-                testWorkspacePath + "/src", testContents, "");
-
-        ArrayList<String> output = read(resultBuild);
-        System.out.println(output);
+        File resultBuild = new File(buildPackage.getDestination());
+        ArrayList<String> resultOutput = read(resultBuild);
+        assertTrue(!resultOutput.isEmpty());
     }
 
     private static ArrayList<String> read(File file) throws IOException {
