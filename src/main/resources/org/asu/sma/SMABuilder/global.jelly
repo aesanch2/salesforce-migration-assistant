@@ -15,11 +15,11 @@
       <f:entry title="Test Class Filter" field="runTestRegex">
           <f:textbox default="${descriptor.runTestRegex}"/>
       </f:entry>
-      <f:entry title="Max Poll (ms)" field="maxPoll">
-          <f:textbox default="${descriptor.maxPoll}"/>
-      </f:entry>
       <f:entry title="Poll Wait (ms)" field="pollWait">
           <f:textbox default="${descriptor.pollWait}"/>
+      </f:entry>
+      <f:entry title="Max Poll" field="maxPoll">
+          <f:textbox default="${descriptor.maxPoll}"/>
       </f:entry>
   </f:section>
 </j:jelly>
