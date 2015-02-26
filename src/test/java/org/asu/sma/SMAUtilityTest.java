@@ -188,7 +188,7 @@ public class SMAUtilityTest {
         File dest = new File(destination);
         SMAUtility.zipRollbackPackage(dest, buildTag);
 
-        File zipTest = new File(localPath.getPath() + "/" + buildTag + "-APMGrollback.zip");
+        File zipTest = new File(localPath.getPath() + "/" + buildTag + "-SMArollback.zip");
         assertTrue(zipTest.exists());
     }
 
