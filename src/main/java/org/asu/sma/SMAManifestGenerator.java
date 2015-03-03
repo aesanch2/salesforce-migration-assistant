@@ -26,14 +26,10 @@ public class SMAManifestGenerator {
 
     /**
      * Generates an xml file that describes the metadata that is to be deployed in this job.
-     * @param memberList
-     * @param manifestLocation
-     * @param isDestructiveChange
+     * @param manifestPackage
      * @return The ArrayList of APMGMetadataObjects that are to be deployed in this job.
      */
-    public static ArrayList<SMAMetadata> generateManifest(ArrayList<String> memberList,
-                                                                 String manifestLocation,
-                                                                 Boolean isDestructiveChange){
+    public static ArrayList<SMAMetadata> generateManifest(SMAPackage manifestPackage){
         ArrayList<SMAMetadata> contents = new ArrayList<SMAMetadata>();
 
         try {
@@ -56,7 +52,7 @@ public class SMAManifestGenerator {
             Boolean typeExists;
             String xpathExpr;
             SMAMetadataXMLDocument.initDocument();
-            for(String repoItem : memberList){
+            for(String repoItem : manifestPackage.getContents()){
                 metadata = SMAMetadataXMLDocument.createMetadataObject(repoItem);
 
                 //Handle unknown members
@@ -78,7 +74,7 @@ public class SMAManifestGenerator {
                 LOG.finest("Path is " + metadata.getPath());
 
                 //Check to make sure the metadata can be deleted if this is a destructiveChange
-                if (!metadata.isDestructible() && isDestructiveChange){
+                if (!metadata.isDestructible() && manifestPackage.isDestructiveChange()){
                     LOG.warning(metadata.getFullName() + " cannot be deleted via the API");
                 }else{
                     //Query the document to see if the metadataType node already exists for this metadata
@@ -129,7 +125,7 @@ public class SMAManifestGenerator {
             rootElement.appendChild(verElement);
 
             //Write the manifest
-            SMAUtility.writeXML(manifestLocation, manifest);
+            SMAUtility.writeXML(manifestPackage.getDestination(), manifest);
         }catch(Exception e){
             e.printStackTrace();
         }

@@ -19,7 +19,7 @@ import static org.junit.Assert.assertTrue;
 public class SMAManifestGeneratorTest {
     
     private String testWorkspacePath;
-    private File resultPackage, testWorkspace;
+    private File testWorkspace;
 
     @Before
     public void setUp() throws Exception {
@@ -28,8 +28,6 @@ public class SMAManifestGeneratorTest {
         testWorkspace.delete();
         testWorkspace.mkdirs();
         testWorkspacePath = testWorkspace.getPath();
-
-        resultPackage = new File(testWorkspace, "testPackage.xml");
     }
 
     @After
@@ -44,9 +42,10 @@ public class SMAManifestGeneratorTest {
         //Read the testGitDiff and put the results into a list
         File testGitDiff = new File("src/test/resources/testDeletes.txt");
         ArrayList<String> testDiffs = read(testGitDiff);
+        SMAPackage testPackage = new SMAPackage(testWorkspacePath, testDiffs, true);
+        SMAManifestGenerator.generateManifest(testPackage);
 
-        SMAManifestGenerator.generateManifest(testDiffs, resultPackage.getPath(), true);
-
+        File resultPackage = new File(testPackage.getDestination());
         ArrayList<String> expectedOutput = read(expectedPackage);
         ArrayList<String> resultOutput = read(resultPackage);
         assertEquals(expectedOutput, resultOutput);
@@ -59,9 +58,10 @@ public class SMAManifestGeneratorTest {
         //Read the testGitDiff and put the results into a list
         File testGitDiff = new File("src/test/resources/testAddsMods.txt");
         ArrayList<String> testDiffs = read(testGitDiff);
+        SMAPackage testPackage = new SMAPackage(testWorkspacePath, testDiffs, false);
+        SMAManifestGenerator.generateManifest(testPackage);
 
-        SMAManifestGenerator.generateManifest(testDiffs, resultPackage.getPath(), false);
-
+        File resultPackage = new File(testPackage.getDestination());
         ArrayList<String> expectedOutput = read(expectedPackage);
         ArrayList<String> resultOutput = read(resultPackage);
         assertEquals(expectedOutput, resultOutput);

@@ -4,7 +4,6 @@ import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.util.ArrayList;
 import java.util.logging.Logger;
 
 /**
@@ -18,15 +17,9 @@ public class SMABuildGenerator {
 
     /**
      * Generates an xml file for salesforce deployments. Can also generate unit tests for the default namespace.
-     * @param buildLocation
-     * @param generateUnitTests
-     * @param deployRoot
-     * @param repoContents
+     * @param buildPackage
      */
-    public static void generateBuildFile(String buildLocation, Boolean generateUnitTests,
-                                         Boolean validate, String deployRoot,
-                                         ArrayList<String> repoContents,
-                                         String jenkinsPluginHome){
+    public static String generateBuildFile(SMAPackage buildPackage){
         try{
             //Create the build file
             DocumentBuilderFactory antFactory = DocumentBuilderFactory.newInstance();
@@ -47,7 +40,7 @@ public class SMABuildGenerator {
             projectRoot.appendChild(environment);
 
             //Set up the taskdef for the salesforce antlib
-            String pathToAntLib = jenkinsPluginHome + "/WEB-INF/lib/ant-salesforce.jar";
+            String pathToAntLib = buildPackage.getPluginHome() + "/WEB-INF/lib/ant-salesforce.jar";
             Element salesforceAntLib = build.createElement("taskdef");
             salesforceAntLib.setAttribute("resource", "com/salesforce/antlib.xml");
             salesforceAntLib.setAttribute("classpath", pathToAntLib);
@@ -63,26 +56,26 @@ public class SMABuildGenerator {
 
             //Create the sf deploy
             Element sfDeploy = build.createElement("sf:deploy");
-            sfDeploy.setAttribute("username", "${sf.username}");
-            sfDeploy.setAttribute("password", "${sf.password}");
-            sfDeploy.setAttribute("serverurl", "${sf.serverurl}");
-            sfDeploy.setAttribute("maxPoll", "20");
-            sfDeploy.setAttribute("pollWaitMillis", "30000");
-            sfDeploy.setAttribute("deployRoot", deployRoot);
-            if(validate){
+            sfDeploy.setAttribute("username", buildPackage.getUsername());
+            sfDeploy.setAttribute("password", buildPackage.getPassword());
+            sfDeploy.setAttribute("serverurl", buildPackage.getServer());
+            sfDeploy.setAttribute("maxPoll", buildPackage.getMaxPoll());
+            sfDeploy.setAttribute("pollWaitMillis", buildPackage.getPollWait());
+            sfDeploy.setAttribute("deployRoot", buildPackage.getWorkspace());
+            if(buildPackage.isValidateOnly()){
                 sfDeploy.setAttribute("checkOnly", "true");
             }else {
                 sfDeploy.setAttribute("checkOnly", "false");
             }
 
             //If indicated, create the test suite
-            if(generateUnitTests){
-                //String testKey = new String("(Test|test)");
+            if(buildPackage.isGenerateUnitTests()){
                 SMAManifestGenerator.SMAMetadataXMLDocument.initDocument();
-                String testPattern = ".*[T|t]est.*";
-                for (String file : repoContents){
+                String testPattern = buildPackage.getRunTestRegex();
+                for (String file : buildPackage.getContents()){
                     if(file.matches(testPattern)){
-                        SMAMetadata testClass = SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject(file);
+                        SMAMetadata testClass = SMAManifestGenerator.SMAMetadataXMLDocument.
+                                createMetadataObject(file);
                         if(testClass.hasMetaxml()){
                             Element runTest = build.createElement("runTest");
                             runTest.setTextContent(testClass.getMember());
@@ -94,11 +87,11 @@ public class SMABuildGenerator {
             target.appendChild(sfDeploy);
 
             //Write the build file
-            SMAUtility.writeXML(buildLocation, build);
-
-            SMAUtility.removeFirstLine(buildLocation);
+            SMAUtility.writeXML(buildPackage.getDestination(), build);
+            SMAUtility.removeFirstLine(buildPackage.getDestination());
         }catch(Exception e){
             e.printStackTrace();
         }
+        return buildPackage.getDestination();
     }
 }

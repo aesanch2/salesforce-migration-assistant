@@ -96,7 +96,10 @@ plan the contents of your repository accordingly.
 
 ### Installation
 * Install the plugin.
-* There are no global configurations to be made with this plugin. All configuration is done on a per project basis.
+* There are some global configuration items for the build.xml portion of SMA.
+    * Enter a Java regular expression to filter your repository for all your unmanaged package unit tests.
+    * Enter the Poll Wait value.
+    * Enter the Max Poll value.
 
 ### Project Configuration
 * Create a new job.
@@ -105,22 +108,33 @@ plan the contents of your repository accordingly.
     * Check whether you want SMA to generate a package manifest file.
         * Check whether you want to let SMA generate rollback packages.
         * Check whether you want to let SMA update your repository's package manifest.
+        * Check whether you want SMA to deploy the entire contents of your repository.
     * Check whether you want SMA to generate a build file.
+        * Enter the username for the environment that you are deploying to.
+        * Enter the password for the user entered above.
+            * Note that the password is stored in plaintext in the generated build.xml file. If you do not want
+            the password to be stored this way, you can specify the password in the traditional Ant properties manner.
+            e.g. ``${sf.password}=xxxxxxx``
+        * Select the Salesforce instance type.
+            * Support for Sandbox and Production only
         * Check whether you want SMA validate this build only.
         * Check whether you want SMA to generate and run unit tests for code in your default namespace.
 * Add ``Invoke Ant`` as a Build step.
     * If you enable SMA to generate a build file, set the following properties:
         * Set ``sma`` as the Ant Target.
         * Set build file to ``$SMA_BUILD``.
-        * Set the following ant properties:
-            * ``sf.serverurl='the target environment's url'``
-            * ``sf.username='the username and target environment'``
-            * ``sf.password='the API password for the user listed above'``
+        * If necessary, set the following ant properties:
+            * ``sf.password='the API password for the user listed in Salesforce Migration Assistant build step'``
 * Add ``Git Publisher`` as a Post-build Action.
     * Check ``Push Only If Build Succeeds``.
     * You can setup any other configuration items in this action as you see fit.
 
 ### Changelog
+
+#### -> 1.1.1
+* Add global configuration for max poll, poll wait, and test regex.
+* Add help text
+* Add username, password, and server url to dynamically generated build.xml
 
 #### -> 1.1
 * Rename plugin
