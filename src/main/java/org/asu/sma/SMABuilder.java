@@ -72,7 +72,7 @@ public class SMABuilder extends Builder {
 
         apexChangePresent = true;
 
-        try{
+        try {
             //Load our environment variables for the job
             envVars = build.getEnvironment(listener);
 
@@ -88,28 +88,28 @@ public class SMABuilder extends Builder {
 
             //Create a deployment space for this job within the workspace
             File deployStage = new File(workspaceDirectory + "/sma");
-            if(deployStage.exists()){
+            if (deployStage.exists()) {
                 FileUtils.deleteDirectory(deployStage);
             }
             deployStage.mkdirs();
 
             //Put the deployment stage location into the environment as a variable
             parameterValues = new ArrayList<ParameterValue>();
-            parameterValues.add(new StringParameterValue("SMA_DEPLOY", deployStage.getPath()+"/src"));
+            parameterValues.add(new StringParameterValue("SMA_DEPLOY", deployStage.getPath() + "/src"));
             String pathToRepo = workspaceDirectory + "/.git";
 
-            //This was the initial commit to the repo or the first build
-            if (prevCommit == null || getForceInitialBuild()){
+            //This was the initial commit to the repo, a manual job trigger, or the first build, deploy the entire repo
+            if (getForceInitialBuild() || prevCommit == null || newCommit.equals(prevCommit)) {
                 prevCommit = null;
                 git = new SMAGit(pathToRepo, newCommit);
             }
             //If we have a previous successful commit from the git plugin
-            else{
+            else {
                 git = new SMAGit(pathToRepo, newCommit, prevCommit);
             }
 
             //Check to see if we need to generateManifest the manifest files
-            if(getGenerateManifests()){
+            if (getGenerateManifests()) {
                 //Get our change sets
                 listOfDestructions = git.getDeletions();
                 listOfUpdates = git.getNewChangeSet();
@@ -125,12 +125,13 @@ public class SMABuilder extends Builder {
                 SMAUtility.replicateMembers(members, workspaceDirectory, deployStage.getPath());
 
                 //Check for rollback
-                if (getRollbackEnabled() && prevCommit != null){
+                if (getRollbackEnabled() && prevCommit != null) {
                     String rollbackDirectory = jenkinsHome + "/jobs/" + jobName + "/builds/" + buildNumber + "/sma/rollback";
                     File rollbackStage = new File(rollbackDirectory);
-                    if(rollbackStage.exists()){
+                    if (rollbackStage.exists()) {
                         FileUtils.deleteDirectory(rollbackStage);
-                    }rollbackStage.mkdirs();
+                    }
+                    rollbackStage.mkdirs();
 
                     //Get our lists
                     ArrayList<String> listOfOldItems = git.getOldChangeSet();
@@ -149,7 +150,7 @@ public class SMABuilder extends Builder {
                 }
 
                 //Check to see if we need to update the repository's package.xml file
-                if(getUpdatePackageEnabled()){
+                if (getUpdatePackageEnabled()) {
                     boolean updateRequired = git.updatePackageXML(workspaceDirectory,
                             jenkinsGitUserName, jenkinsGitEmail);
                     if (updateRequired)
@@ -158,7 +159,7 @@ public class SMABuilder extends Builder {
             }
 
             //Check to see if we need to generateManifest the build file
-            if(getGenerateAntEnabled()){
+            if (getGenerateAntEnabled()) {
                 SMAPackage buildPackage = new SMAPackage(deployStage.getPath(), git.getContents(),
                         jenkinsHome, getDescriptor().getRunTestRegex(), getDescriptor().getPollWait(),
                         getDescriptor().getMaxPoll(), getRunUnitTests(), getValidateEnabled(),
@@ -169,7 +170,7 @@ public class SMABuilder extends Builder {
             }
 
             build.addAction(new ParametersAction(parameterValues));
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace(listener.getLogger());
             return false;
         }
