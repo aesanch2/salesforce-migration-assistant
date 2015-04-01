@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SMABuildGeneratorTest {
@@ -53,11 +52,29 @@ public class SMABuildGeneratorTest {
         SMAPackage buildPackage = new SMAPackage(testWorkspacePath, testContents,
                 jenkinsHome, runTestRegex, pollWait, maxPoll, generateUnitTests, validateOnly,
                 "user@user.com.test", "${sf.password}", "Sandbox");
-        SMABuildGenerator.generateBuildFile(buildPackage);
+        SMABuildGenerator.generateBuildFile(buildPackage, true);
 
+
+        boolean unitTestGenerated = false;
         File resultBuild = new File(buildPackage.getDestination());
         ArrayList<String> resultOutput = read(resultBuild);
-        assertTrue(!resultOutput.isEmpty());
+        for(String output : resultOutput) {
+            if(output.contains("runTest")){
+                unitTestGenerated = true;
+            }
+        }
+        assertTrue(unitTestGenerated);
+
+        unitTestGenerated = false;
+        SMABuildGenerator.generateBuildFile(buildPackage, false);
+        File noUnitTests = new File(buildPackage.getDestination());
+        ArrayList<String> noUnitTestsOutput = read(noUnitTests);
+        for(String noUnitTestOut : noUnitTestsOutput) {
+            if(noUnitTestOut.contains("runTest")){
+                unitTestGenerated = true;
+            }
+        }
+        assertTrue(!unitTestGenerated);
     }
 
     private static ArrayList<String> read(File file) throws IOException {

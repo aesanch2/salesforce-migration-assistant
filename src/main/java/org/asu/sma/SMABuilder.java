@@ -55,6 +55,7 @@ public class SMABuilder extends Builder {
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+        Boolean apexChangePresent;
         String newCommit;
         String prevCommit;
         String jenkinsGitUserName;
@@ -68,6 +69,8 @@ public class SMABuilder extends Builder {
         ArrayList<SMAMetadata> members;
         EnvVars envVars;
         List<ParameterValue> parameterValues;
+
+        apexChangePresent = true;
 
         try{
             //Load our environment variables for the job
@@ -113,6 +116,9 @@ public class SMABuilder extends Builder {
 
                 //Generate the manifests
                 members = SMAUtility.generate(listOfDestructions, listOfUpdates, deployStage.getPath());
+
+                apexChangePresent = SMAUtility.apexChangesPresent(members);
+
                 listener.getLogger().println("[SMA] - Created deployment package.");
 
                 //Copy the files to the deployStage
@@ -157,7 +163,7 @@ public class SMABuilder extends Builder {
                         jenkinsHome, getDescriptor().getRunTestRegex(), getDescriptor().getPollWait(),
                         getDescriptor().getMaxPoll(), getRunUnitTests(), getValidateEnabled(),
                         getSfUsername(), getSfPassword(), getSfServer());
-                String buildFile = SMABuildGenerator.generateBuildFile(buildPackage);
+                String buildFile = SMABuildGenerator.generateBuildFile(buildPackage, apexChangePresent);
                 listener.getLogger().println("[SMA] - Created build file.");
                 parameterValues.add(new StringParameterValue("SMA_BUILD", buildFile));
             }
