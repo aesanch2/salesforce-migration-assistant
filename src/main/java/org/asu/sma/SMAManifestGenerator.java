@@ -58,10 +58,6 @@ public class SMAManifestGenerator {
                 //Handle unknown members
                 if(metadata.getMetadataType().equals("Invalid")) {
                     if (metadata.getFullName().contains("-meta")){
-                        contents.add(metadata);
-                        LOG.fine(metadata.getFullName() + " is a valid member, but unnecessary for manifest");
-                        continue;
-                    }else {
                         LOG.warning(metadata.getFullName() + " is not a valid member of the API");
                         continue;
                     }

@@ -123,8 +123,6 @@ public class SMAUtilityTest {
         //Create our expected members list
         expectedList = new ArrayList<SMAMetadata>();
         expectedList.add(SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject("src/triggers/addThis.trigger"));
-        expectedList.add(SMAManifestGenerator.SMAMetadataXMLDocument.
-                createMetadataObject("src/triggers/addThis.trigger-meta.xml"));
         expectedList.add(SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject("src/pages/modifyThis.page"));
 
         git = new SMAGit(gitDir, newSha, oldSha);
