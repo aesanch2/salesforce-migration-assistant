@@ -32,5 +32,8 @@
                 <f:checkbox />
             </f:entry>
         </f:optionalBlock>
+        <f:entry title="SHA Override" field="shaOverride">
+            <f:textbox/>
+        </f:entry>
     </f:block>
 </j:jelly>

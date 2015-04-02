@@ -30,12 +30,15 @@ public class SMABuilder extends Builder {
     private String sfUsername;
     private String sfPassword;
     private String sfServer;
+    private String shaOverride;
     private JSONObject generateManifests;
     private JSONObject generateAntEnabled;
 
 
     @DataBoundConstructor
-    public SMABuilder(JSONObject generateManifests, JSONObject generateAntEnabled) {
+    public SMABuilder(JSONObject generateManifests,
+                      JSONObject generateAntEnabled,
+                      String shaOverride) {
         this.generateManifests = generateManifests;
         if(generateManifests != null) {
             rollbackEnabled = Boolean.valueOf(generateManifests.get("rollbackEnabled").toString());
@@ -51,6 +54,8 @@ public class SMABuilder extends Builder {
             validateEnabled = Boolean.valueOf(generateAntEnabled.get("validateEnabled").toString());
             runUnitTests = Boolean.valueOf(generateAntEnabled.get("runUnitTests").toString());
         }
+
+        this.shaOverride = shaOverride;
     }
 
     @Override
@@ -69,6 +74,8 @@ public class SMABuilder extends Builder {
         ArrayList<SMAMetadata> members;
         EnvVars envVars;
         List<ParameterValue> parameterValues;
+        String smaShaOverride;
+        String smaForceOverride;
 
         apexChangePresent = true;
 
@@ -86,6 +93,15 @@ public class SMABuilder extends Builder {
             buildNumber = envVars.get("BUILD_NUMBER");
             jenkinsHome = envVars.get("JENKINS_HOME");
 
+            //Handle possible environment variables
+            smaShaOverride = envVars.get("SMA_SHA_OVERRIDE");
+            smaForceOverride = envVars.get("SMA_FORCE_INITIAL_BUILD");
+
+
+            if(!smaForceOverride.isEmpty()){
+                setForceInitialBuild(Boolean.valueOf(smaForceOverride));
+            }
+
             //Create a deployment space for this job within the workspace
             File deployStage = new File(workspaceDirectory + "/sma");
             if (deployStage.exists()) {
@@ -98,8 +114,17 @@ public class SMABuilder extends Builder {
             parameterValues.add(new StringParameterValue("SMA_DEPLOY", deployStage.getPath() + "/src"));
             String pathToRepo = workspaceDirectory + "/.git";
 
+            //If shaOverride was provided, use it as the previous commit ALWAYS
+            if (!smaShaOverride.isEmpty()){
+                prevCommit = smaShaOverride;
+                git = new SMAGit(pathToRepo, newCommit, prevCommit);
+            }
+            else if (!getShaOverride().isEmpty()){
+                prevCommit = getShaOverride();
+                git = new SMAGit(pathToRepo, newCommit, prevCommit);
+            }
             //This was the initial commit to the repo, a manual job trigger, or the first build, deploy the entire repo
-            if (getForceInitialBuild() || prevCommit == null || newCommit.equals(prevCommit)) {
+            else if (getForceInitialBuild() || prevCommit == null || newCommit.equals(prevCommit)) {
                 prevCommit = null;
                 git = new SMAGit(pathToRepo, newCommit);
             }
@@ -120,6 +145,8 @@ public class SMABuilder extends Builder {
                 apexChangePresent = SMAUtility.apexChangesPresent(members);
 
                 listener.getLogger().println("[SMA] - Created deployment package.");
+
+                printMembers(listener, members);
 
                 //Copy the files to the deployStage
                 SMAUtility.replicateMembers(members, workspaceDirectory, deployStage.getPath());
@@ -198,6 +225,8 @@ public class SMABuilder extends Builder {
 
     public boolean getForceInitialBuild() { return forceInitialBuild; }
 
+    public void setForceInitialBuild(Boolean forceInitialBuild) { this.forceInitialBuild = forceInitialBuild; }
+
     public boolean getRunUnitTests() { return runUnitTests; }
 
     public boolean getValidateEnabled() { return validateEnabled; }
@@ -207,6 +236,19 @@ public class SMABuilder extends Builder {
     public String getSfServer() { return sfServer; }
 
     public String getSfPassword() { return sfPassword; }
+
+    public void setShaOverride(String shaOverride) {
+        this.shaOverride = shaOverride;
+    }
+
+    public String getShaOverride() { return shaOverride; }
+
+    private void printMembers(BuildListener listener, ArrayList<SMAMetadata> members){
+        listener.getLogger().println("[SMA] - Deploying the following metadata:");
+        for(SMAMetadata member : members){
+            listener.getLogger().println("\t" + member.getFullName());
+        }
+    }
 
     @Override
     public DescriptorImpl getDescriptor() {
