@@ -61,6 +61,8 @@ public class SMABuilder extends Builder {
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         Boolean apexChangePresent;
+        Boolean envVarForceOverride;
+        String envVarShaOverride;
         String newCommit;
         String prevCommit;
         String jenkinsGitUserName;
@@ -74,8 +76,6 @@ public class SMABuilder extends Builder {
         ArrayList<SMAMetadata> members;
         EnvVars envVars;
         List<ParameterValue> parameterValues;
-        String envVarShaOverride;
-        String envVarForceOverride;
 
         apexChangePresent = true;
 
@@ -95,12 +95,7 @@ public class SMABuilder extends Builder {
 
             //Handle possible environment variables
             envVarShaOverride = envVars.get("SMA_SHA_OVERRIDE");
-            envVarForceOverride = envVars.get("SMA_FORCE_INITIAL_BUILD");
-
-
-            if(!envVarForceOverride.isEmpty()){
-                setForceInitialBuild(Boolean.valueOf(envVarForceOverride));
-            }
+            envVarForceOverride = Boolean.valueOf(envVars.get("SMA_FORCE_INITIAL_BUILD"));
 
             //Create a deployment space for this job within the workspace
             File deployStage = new File(workspaceDirectory + "/sma");
@@ -123,15 +118,15 @@ public class SMABuilder extends Builder {
                 prevCommit = getShaOverride();
                 git = new SMAGit(pathToRepo, newCommit, prevCommit);
             }
+            //This was the initial commit to the repo, a manual job trigger, or the first build, deploy the entire repo
+            else if (envVarForceOverride || getForceInitialBuild() || prevCommit == null) {
+                prevCommit = null;
+                git = new SMAGit(pathToRepo, newCommit);
+            }
             //Use the last successful build since this is the same deployment
             else if (newCommit.equals(prevCommit)){
                 listener.getLogger().println("[SMA] - Redeploying last successful build.");
                 return true;
-            }
-            //This was the initial commit to the repo, a manual job trigger, or the first build, deploy the entire repo
-            else if (getForceInitialBuild() || prevCommit == null) {
-                prevCommit = null;
-                git = new SMAGit(pathToRepo, newCommit);
             }
             //If we have a previous successful commit from the git plugin
             else {
@@ -250,8 +245,10 @@ public class SMABuilder extends Builder {
 
     private void printMembers(BuildListener listener, ArrayList<SMAMetadata> members){
         listener.getLogger().println("[SMA] - Deploying the following metadata:");
-        for(SMAMetadata member : members){
-            listener.getLogger().println("\t" + member.getFullName());
+        for(SMAMetadata member : members) {
+            if (member.isValid()) {
+                listener.getLogger().println("\t" + member.getFullName());
+            }
         }
     }
 
