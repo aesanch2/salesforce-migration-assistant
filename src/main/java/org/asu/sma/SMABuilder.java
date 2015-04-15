@@ -94,15 +94,15 @@ public class SMABuilder extends Builder {
             //Handle optional environment variables
             String envVarShaOverride = envVars.get("SMA_SHA_OVERRIDE");
 
-            if (envVarShaOverride != null){
+            if (envVarShaOverride != null) {
                 forceShaOverride = envVarShaOverride;
-            }else {
+            } else {
                 forceShaOverride = "";
             }
 
             String envVarForceOverride = envVars.get("SMA_FORCE_INITIAL_BUILD");
 
-            if (envVarForceOverride != null){
+            if (envVarForceOverride != null) {
                 forceInitialBuildOverride = Boolean.valueOf(envVarForceOverride);
             }
 
@@ -118,22 +118,20 @@ public class SMABuilder extends Builder {
             parameterValues.add(new StringParameterValue("SMA_DEPLOY", deployStage.getPath() + "/src"));
             String pathToRepo = workspaceDirectory + "/.git";
 
-            //If forceSha was provided, use it as the previous commit ALWAYS
-            if (!forceShaOverride.isEmpty()){
+            //Determine which git wrapper to use based on project configuration and build variables
+            if (!forceShaOverride.isEmpty()) {
+                //If forceSha was provided, use it as the previous commit ALWAYS
                 prevCommit = forceShaOverride;
                 git = new SMAGit(pathToRepo, newCommit, prevCommit);
-            }
-            else if (!getForceSha().isEmpty()){
+            } else if (!getForceSha().isEmpty()) {
                 prevCommit = getForceSha();
                 git = new SMAGit(pathToRepo, newCommit, prevCommit);
-            }
-            //This was the initial commit to the repo, a manual job trigger, or the first build, deploy the entire repo
-            else if (forceInitialBuildOverride || getForceInitialBuild() || prevCommit == null) {
+            } else if (forceInitialBuildOverride || getForceInitialBuild() || prevCommit == null) {
+                //This was the initial commit to the repo, a manual job trigger, or the first build, deploy the entire repo
                 prevCommit = null;
                 git = new SMAGit(pathToRepo, newCommit);
-            }
-            //If we have a previous successful commit from the git plugin
-            else {
+            } else {
+                //If we have a previous successful commit from the git plugin
                 git = new SMAGit(pathToRepo, newCommit, prevCommit);
             }
 
@@ -184,8 +182,9 @@ public class SMABuilder extends Builder {
                 if (getUpdatePackageEnabled()) {
                     boolean updateRequired = git.updatePackageXML(workspaceDirectory,
                             jenkinsGitUserName, jenkinsGitEmail);
-                    if (updateRequired)
+                    if (updateRequired) {
                         listener.getLogger().println("[SMA] - Updated repository package.xml file.");
+                    }
                 }
             }
 
@@ -223,6 +222,13 @@ public class SMABuilder extends Builder {
             return true;
     }
 
+    public String getForceSha() {
+        if (forceSha == null) {
+            return "";
+        }
+        return forceSha;
+    }
+
     public boolean getRollbackEnabled() { return rollbackEnabled; }
 
     public boolean getUpdatePackageEnabled() { return updatePackageEnabled; }
@@ -239,9 +245,7 @@ public class SMABuilder extends Builder {
 
     public String getSfPassword() { return sfPassword; }
 
-    public String getForceSha() { return forceSha; }
-
-    private void printMembers(BuildListener listener, ArrayList<SMAMetadata> members){
+    private void printMembers(BuildListener listener, ArrayList<SMAMetadata> members) {
         listener.getLogger().println("[SMA] - Deploying the following metadata:");
         for(SMAMetadata member : members) {
             if (member.isValid()) {
@@ -287,7 +291,7 @@ public class SMABuilder extends Builder {
             return pollWait;
         }
 
-        public ListBoxModel doFillSfServerItems(){
+        public ListBoxModel doFillSfServerItems() {
             return new ListBoxModel(
                     new ListBoxModel.Option("Production (https://login.salesforce.com)", "https://login.salesforce.com"),
                     new ListBoxModel.Option("Sandbox (https://test.salesforce.com)", "https://test.salesforce.com")
