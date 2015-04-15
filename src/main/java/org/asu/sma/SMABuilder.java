@@ -30,7 +30,7 @@ public class SMABuilder extends Builder {
     private String sfUsername;
     private String sfPassword;
     private String sfServer;
-    private String shaOverride;
+    private String forceSha;
     private JSONObject generateManifests;
     private JSONObject generateAntEnabled;
 
@@ -38,7 +38,7 @@ public class SMABuilder extends Builder {
     @DataBoundConstructor
     public SMABuilder(JSONObject generateManifests,
                       JSONObject generateAntEnabled,
-                      String shaOverride) {
+                      String forceSha) {
         this.generateManifests = generateManifests;
         if(generateManifests != null) {
             rollbackEnabled = Boolean.valueOf(generateManifests.get("rollbackEnabled").toString());
@@ -55,12 +55,14 @@ public class SMABuilder extends Builder {
             runUnitTests = Boolean.valueOf(generateAntEnabled.get("runUnitTests").toString());
         }
 
-        this.shaOverride = shaOverride;
+        this.forceSha = forceSha;
     }
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-        Boolean apexChangePresent;
+        boolean apexChangePresent = true;
+        boolean forceInitialBuildOverride = false;
+        String forceShaOverride;
         String newCommit;
         String prevCommit;
         String jenkinsGitUserName;
@@ -74,10 +76,6 @@ public class SMABuilder extends Builder {
         ArrayList<SMAMetadata> members;
         EnvVars envVars;
         List<ParameterValue> parameterValues;
-        String smaShaOverride;
-        String smaForceOverride;
-
-        apexChangePresent = true;
 
         try {
             //Load our environment variables for the job
@@ -93,13 +91,19 @@ public class SMABuilder extends Builder {
             buildNumber = envVars.get("BUILD_NUMBER");
             jenkinsHome = envVars.get("JENKINS_HOME");
 
-            //Handle possible environment variables
-            smaShaOverride = envVars.get("SMA_SHA_OVERRIDE");
-            smaForceOverride = envVars.get("SMA_FORCE_INITIAL_BUILD");
+            //Handle optional environment variables
+            String envVarShaOverride = envVars.get("SMA_SHA_OVERRIDE");
 
+            if (envVarShaOverride != null) {
+                forceShaOverride = envVarShaOverride;
+            } else {
+                forceShaOverride = "";
+            }
 
-            if(!smaForceOverride.isEmpty()){
-                setForceInitialBuild(Boolean.valueOf(smaForceOverride));
+            String envVarForceOverride = envVars.get("SMA_FORCE_INITIAL_BUILD");
+
+            if (envVarForceOverride != null) {
+                forceInitialBuildOverride = Boolean.valueOf(envVarForceOverride);
             }
 
             //Create a deployment space for this job within the workspace
@@ -114,26 +118,24 @@ public class SMABuilder extends Builder {
             parameterValues.add(new StringParameterValue("SMA_DEPLOY", deployStage.getPath() + "/src"));
             String pathToRepo = workspaceDirectory + "/.git";
 
-            //If shaOverride was provided, use it as the previous commit ALWAYS
-            if (!smaShaOverride.isEmpty()){
-                prevCommit = smaShaOverride;
+            //Determine which git wrapper to use based on project configuration and build variables
+            if (!forceShaOverride.isEmpty()) {
+                //If forceSha was provided, use it as the previous commit ALWAYS
+                prevCommit = forceShaOverride;
                 git = new SMAGit(pathToRepo, newCommit, prevCommit);
-            }
-            else if (!getShaOverride().isEmpty()){
-                prevCommit = getShaOverride();
+            } else if (!getForceSha().isEmpty()) {
+                prevCommit = getForceSha();
                 git = new SMAGit(pathToRepo, newCommit, prevCommit);
-            }
-            //This was the initial commit to the repo, a manual job trigger, or the first build, deploy the entire repo
-            else if (getForceInitialBuild() || prevCommit == null || newCommit.equals(prevCommit)) {
+            } else if (forceInitialBuildOverride || getForceInitialBuild() || prevCommit == null) {
+                //This was the initial commit to the repo, a manual job trigger, or the first build, deploy the entire repo
                 prevCommit = null;
                 git = new SMAGit(pathToRepo, newCommit);
-            }
-            //If we have a previous successful commit from the git plugin
-            else {
+            } else {
+                //If we have a previous successful commit from the git plugin
                 git = new SMAGit(pathToRepo, newCommit, prevCommit);
             }
 
-            //Check to see if we need to generateManifest the manifest files
+            //Check to see if we need to generate the manifest files
             if (getGenerateManifests()) {
                 //Get our change sets
                 listOfDestructions = git.getDeletions();
@@ -180,8 +182,9 @@ public class SMABuilder extends Builder {
                 if (getUpdatePackageEnabled()) {
                     boolean updateRequired = git.updatePackageXML(workspaceDirectory,
                             jenkinsGitUserName, jenkinsGitEmail);
-                    if (updateRequired)
+                    if (updateRequired) {
                         listener.getLogger().println("[SMA] - Updated repository package.xml file.");
+                    }
                 }
             }
 
@@ -219,13 +222,18 @@ public class SMABuilder extends Builder {
             return true;
     }
 
+    public String getForceSha() {
+        if (forceSha == null) {
+            return "";
+        }
+        return forceSha;
+    }
+
     public boolean getRollbackEnabled() { return rollbackEnabled; }
 
     public boolean getUpdatePackageEnabled() { return updatePackageEnabled; }
 
     public boolean getForceInitialBuild() { return forceInitialBuild; }
-
-    public void setForceInitialBuild(Boolean forceInitialBuild) { this.forceInitialBuild = forceInitialBuild; }
 
     public boolean getRunUnitTests() { return runUnitTests; }
 
@@ -237,16 +245,12 @@ public class SMABuilder extends Builder {
 
     public String getSfPassword() { return sfPassword; }
 
-    public void setShaOverride(String shaOverride) {
-        this.shaOverride = shaOverride;
-    }
-
-    public String getShaOverride() { return shaOverride; }
-
-    private void printMembers(BuildListener listener, ArrayList<SMAMetadata> members){
+    private void printMembers(BuildListener listener, ArrayList<SMAMetadata> members) {
         listener.getLogger().println("[SMA] - Deploying the following metadata:");
-        for(SMAMetadata member : members){
-            listener.getLogger().println("\t" + member.getFullName());
+        for(SMAMetadata member : members) {
+            if (member.isValid()) {
+                listener.getLogger().println("\t" + member.getFullName());
+            }
         }
     }
 
@@ -287,7 +291,7 @@ public class SMABuilder extends Builder {
             return pollWait;
         }
 
-        public ListBoxModel doFillSfServerItems(){
+        public ListBoxModel doFillSfServerItems() {
             return new ListBoxModel(
                     new ListBoxModel.Option("Production (https://login.salesforce.com)", "https://login.salesforce.com"),
                     new ListBoxModel.Option("Sandbox (https://test.salesforce.com)", "https://test.salesforce.com")

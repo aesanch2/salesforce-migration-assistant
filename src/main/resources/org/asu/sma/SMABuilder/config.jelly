@@ -32,7 +32,7 @@
                 <f:checkbox />
             </f:entry>
         </f:optionalBlock>
-        <f:entry title="SHA Override" field="shaOverride">
+        <f:entry title="SHA Override" field="forceSha">
             <f:textbox/>
         </f:entry>
     </f:block>

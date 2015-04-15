@@ -119,6 +119,8 @@ plan the contents of your repository accordingly.
             * Support for Sandbox and Production only
         * Check whether you want SMA validate this build only.
         * Check whether you want SMA to generate and run unit tests for code in your default namespace.
+    * If you would like all deployments to build against a particular commit, you can specify that commit in the `SHA Override` 
+    field.
 * Add ``Invoke Ant`` as a Build step.
     * If you enable SMA to generate a build file, set the following properties:
         * Set ``sma`` as the Ant Target.
@@ -128,8 +130,22 @@ plan the contents of your repository accordingly.
 * Add ``Git Publisher`` as a Post-build Action.
     * Check ``Push Only If Build Succeeds``.
     * You can setup any other configuration items in this action as you see fit.
+    
+### Parameterized Builds
+If you would like to manually override some of the aspects of builds, particularly on manual builds, you can set them via
+specific parameters.
+* `SMA_FORCE_INITIAL_BUILD`: A boolean parameter that forces manually triggered builds to deploy the entire repository contents.
+* `SMA_SHA_OVERRIDE`: A String parameter that allows manually triggered builds to be generated against a particular commit
+in your repository.
 
 ### Changelog
+
+#### -> 1.1.2
+* Add support for overriding the previous commit sha and to force an initial build.
+* Add support for parameter-izing said overrides.
+    * `SMA_FORCE_INITIAL_BUILD` -> Boolean
+    * `SMA_SHA_OVERRIDE` -> String
+* Bug fixes.
 
 #### -> 1.1.1
 * Add global configuration for max poll, poll wait, and test regex.
