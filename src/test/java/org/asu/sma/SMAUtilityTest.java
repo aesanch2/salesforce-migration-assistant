@@ -123,8 +123,6 @@ public class SMAUtilityTest {
         //Create our expected members list
         expectedList = new ArrayList<SMAMetadata>();
         expectedList.add(SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject("src/triggers/addThis.trigger"));
-        expectedList.add(SMAManifestGenerator.SMAMetadataXMLDocument.
-                createMetadataObject("src/triggers/addThis.trigger-meta.xml"));
         expectedList.add(SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject("src/pages/modifyThis.page"));
 
         git = new SMAGit(gitDir, newSha, oldSha);
@@ -190,6 +188,30 @@ public class SMAUtilityTest {
 
         File zipTest = new File(localPath.getPath() + "/" + buildTag + "-SMArollback.zip");
         assertTrue(zipTest.exists());
+    }
+
+    @Test
+    public void testApexChangesPresent() throws Exception{
+        Boolean apexChangeNotDetected;
+        Boolean apexChangeDetected;
+
+        //Setup the metadata xml document
+        SMAManifestGenerator.SMAMetadataXMLDocument.initDocument();
+
+        //Create our expected members list
+        expectedList = new ArrayList<SMAMetadata>();
+        expectedList.add(SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject("src/triggers/addThis.trigger"));
+        expectedList.add(SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject("src/classes/addThis.cls"));
+
+        apexChangeDetected = SMAUtility.apexChangesPresent(expectedList);
+
+        expectedList.clear();
+        expectedList.add(SMAManifestGenerator.SMAMetadataXMLDocument.createMetadataObject("src/pages/modifyThis.page"));
+
+        apexChangeNotDetected = SMAUtility.apexChangesPresent(expectedList);
+
+        assertTrue(apexChangeDetected);
+        assertTrue(!apexChangeNotDetected);
     }
 
 }

@@ -220,15 +220,30 @@ public class SMAGit {
         modificationsNew = new ArrayList<String>();
         modificationsOld = new ArrayList<String>();
 
+        String item;
         List<DiffEntry> diffs = getDiffs();
         for (DiffEntry diff : diffs){
             if (diff.getChangeType().toString().equals("DELETE")){
-                deletions.add(diff.getOldPath());
+                item = checkMeta(diff.getOldPath());
+                if(!deletions.contains(item)){
+                    deletions.add(item);
+                }
             }else if (diff.getChangeType().toString().equals("ADD")){
                 additions.add(diff.getNewPath());
+                item = checkMeta(diff.getNewPath());
+                if(!additions.contains(item)){
+                    additions.add(item);
+                }
             }else if (diff.getChangeType().toString().equals("MODIFY")){
-                modificationsNew.add(diff.getNewPath());
-                modificationsOld.add(diff.getOldPath());
+                item = checkMeta(diff.getNewPath());
+                if(!modificationsNew.contains(item)){
+                    modificationsNew.add(item);
+                }
+
+                item = checkMeta(diff.getOldPath());
+                if(!modificationsOld.contains(item)){
+                    modificationsOld.add(item);
+                }
             }
         }
     }
@@ -257,4 +272,15 @@ public class SMAGit {
         tree.reset(reader, head);
         return tree;
     }
+
+    private static String checkMeta(String repoItem){
+        String actualItem = repoItem;
+
+        if (repoItem.contains("-meta")){
+            actualItem = repoItem.substring(0, repoItem.length()-9);
+        }
+
+        return actualItem;
+    }
+
 }

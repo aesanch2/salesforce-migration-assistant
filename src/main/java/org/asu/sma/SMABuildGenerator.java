@@ -1,6 +1,8 @@
 package org.asu.sma;
 
-import org.w3c.dom.*;
+import org.w3c.dom.Comment;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,7 +21,7 @@ public class SMABuildGenerator {
      * Generates an xml file for salesforce deployments. Can also generate unit tests for the default namespace.
      * @param buildPackage
      */
-    public static String generateBuildFile(SMAPackage buildPackage){
+    public static String generateBuildFile(SMAPackage buildPackage, Boolean apexChangePresent){
         try{
             //Create the build file
             DocumentBuilderFactory antFactory = DocumentBuilderFactory.newInstance();
@@ -68,8 +70,8 @@ public class SMABuildGenerator {
                 sfDeploy.setAttribute("checkOnly", "false");
             }
 
-            //If indicated, create the test suite
-            if(buildPackage.isGenerateUnitTests()){
+            //If indicated and there are .cls or .trigger changes, create the test suite
+            if(buildPackage.isGenerateUnitTests() && apexChangePresent){
                 SMAManifestGenerator.SMAMetadataXMLDocument.initDocument();
                 String testPattern = buildPackage.getRunTestRegex();
                 for (String file : buildPackage.getContents()){

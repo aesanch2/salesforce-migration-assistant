@@ -183,4 +183,21 @@ public class SMAUtility {
             fis.close();
         }
     }
+
+    /**
+     * Helper method that determines if the unit test suite needs to be run for this change.
+     * @param changeSet The SMAMetadata objects that were created for this change
+     * @return A boolean value indicating the presence of ApexClasses or ApexTriggers.
+     */
+    public static boolean apexChangesPresent(ArrayList<SMAMetadata> changeSet){
+        boolean apexPresent = false;
+
+        for(SMAMetadata metadata : changeSet){
+            if (metadata.getMetadataType().equals("ApexClass") || metadata.getMetadataType().equals("ApexTrigger")){
+                apexPresent = true;
+            }
+        }
+
+        return apexPresent;
+    }
 }
