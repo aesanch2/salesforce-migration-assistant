@@ -1,39 +1,22 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
     <f:block>
-        <f:optionalBlock name="generateManifests"
-                         checked="${instance.generateManifests}"
-                         title="Generate manifest file">
-            <f:entry title="Enable rollback package creation">
-                <f:checkbox field="rollbackEnabled"/>
-            </f:entry>
-            <f:entry title="Update remote's package manifest">
-                <f:checkbox field="updatePackageEnabled"/>
-            </f:entry>
-            <f:entry title="Force initial build" >
-                <f:checkbox field="forceInitialBuild"/>
-            </f:entry>
-        </f:optionalBlock>
-        <f:optionalBlock name="generateAntEnabled"
-                         checked="${instance.generateAntEnabled}"
-                         title="Generate build file">
-            <f:entry title="Username" field="sfUsername">
-                <f:textbox />
-            </f:entry>
-            <f:entry title="Password" field="sfPassword">
-                <f:password />
-            </f:entry>
-            <f:entry field="sfServer" title="Server Type">
-                <f:select />
-            </f:entry>
-            <f:entry field="validateEnabled" title="Validate only" >
-                <f:checkbox />
-            </f:entry>
-            <f:entry field="runUnitTests" title="Run unit tests" >
-                <f:checkbox />
-            </f:entry>
-        </f:optionalBlock>
-        <f:entry title="SHA Override" field="forceSha">
-            <f:textbox/>
+        <f:entry title="Username" field="username">
+            <f:textbox />
+        </f:entry>
+        <f:entry title="Password" field="password">
+            <f:password />
+        </f:entry>
+        <f:entry title="Security Token" field="securityToken">
+            <f:password />
+        </f:entry>
+        <f:entry title="Server Type" field="serverType">
+            <f:select />
+        </f:entry>
+        <f:entry title="Validate Only" field="validateEnabled">
+            <f:checkbox />
+        </f:entry>
+        <f:entry title="Test Level" field="testLevel">
+            <f:select />
         </f:entry>
     </f:block>
 </j:jelly>

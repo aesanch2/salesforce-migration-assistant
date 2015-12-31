@@ -1,9 +1,9 @@
 package org.asu.sma;
 
+import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -12,275 +12,321 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.treewalk.filter.PathFilter;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
  * Wrapper for git interactions using jGit.
+ *
  * @author aesanch2
  */
-public class SMAGit {
+public class SMAGit
+{
 
     private Git git;
     private Repository repository;
-    private ArrayList<String> additions, deletions, modificationsOld, modificationsNew, contents;
+    private List<DiffEntry> diffs;
     private String prevCommit, curCommit;
+    private String pathToWorkspace;
 
     private static final Logger LOG = Logger.getLogger(SMAGit.class.getName());
 
     /**
      * Creates an SMAGit instance for the initial commit and/or initial build.
-     * @param pathToRepo The path to the git repository.
-     * @param curCommit The current commit.
+     *
+     * @param pathToWorkspace The path to the git repository.
+     * @param curCommit       The current commit.
      * @throws Exception
      */
-    public SMAGit(String pathToRepo, String curCommit) throws Exception{
+    public SMAGit(String pathToWorkspace,
+                  String curCommit) throws Exception
+    {
+        this.pathToWorkspace = pathToWorkspace;
+        String pathToRepo = pathToWorkspace + "/.git";
         File repoDir = new File(pathToRepo);
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         repository = builder.setGitDir(repoDir).readEnvironment().build();
         git = new Git(repository);
         this.curCommit = curCommit;
-        additions = getContents();
     }
 
     /**
      * Creates an SMAGit instance for all other builds.
-     * @param pathToRepo The path to the git repository.
-     * @param curCommit The current commit.
-     * @param prevCommit The previous commit.
+     *
+     * @param pathToWorkspace The path to the git repository.
+     * @param curCommit       The current commit.
+     * @param prevCommit      The previous commit.
      * @throws Exception
      */
-    public SMAGit(String pathToRepo, String curCommit, String prevCommit) throws Exception{
+    public SMAGit(String pathToWorkspace,
+                  String curCommit,
+                  String prevCommit) throws Exception
+    {
+        this.pathToWorkspace = pathToWorkspace;
+        String pathToRepo = pathToWorkspace + "/.git";
         File repoDir = new File(pathToRepo);
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         repository = builder.setGitDir(repoDir).readEnvironment().build();
         git = new Git(repository);
         this.prevCommit = prevCommit;
         this.curCommit = curCommit;
-        determineChanges();
+        getDiffs();
     }
 
     /**
      * Returns all of the items that were added in the current commit.
+     *
      * @return The ArrayList containing all of the additions in the current commit.
      * @throws IOException
      */
-    public ArrayList<String> getAdditions() throws IOException{
-        if (additions == null){
-            additions = new ArrayList<String>();
+    public Map<String, byte[]> getNewMetadata() throws Exception
+    {
+        Map<String, byte[]> additions = new HashMap<String, byte[]>();
+
+        for (DiffEntry diff : diffs)
+        {
+            if (diff.getChangeType().toString().equals("ADD"))
+            {
+                String item = SMAUtility.checkMeta(diff.getNewPath());
+                if (!additions.containsKey(item))
+                {
+                    additions.put(diff.getNewPath(), getBlob(diff.getNewPath(), curCommit));
+                }
+            }
         }
+
         return additions;
     }
 
     /**
      * Returns all of the items that were deleted in the current commit.
+     *
      * @return The ArrayList containing all of the items that were deleted in the current commit.
      */
-    public ArrayList<String> getDeletions(){
-        if (deletions == null){
-            deletions = new ArrayList<String>();
+    public Map<String, byte[]> getDeletedMetadata() throws Exception
+    {
+        Map<String, byte[]> deletions = new HashMap<String, byte[]>();
+
+        for (DiffEntry diff : diffs)
+        {
+            if (diff.getChangeType().toString().equals("DELETE"))
+            {
+                String item = SMAUtility.checkMeta(diff.getOldPath());
+                if (!deletions.containsKey(item))
+                {
+                    deletions.put(diff.getOldPath(), getBlob(diff.getOldPath(), prevCommit));
+                }
+            }
         }
+
         return deletions;
     }
 
     /**
      * Returns all of the updated changes in the current commit.
+     *
      * @return The ArrayList containing the items that were modified (new paths) and added to the repository.
      * @throws IOException
      */
-    public ArrayList<String> getNewChangeSet() throws IOException{
-        ArrayList<String> newChangeSet = new ArrayList<String>();
+    public Map<String, byte[]> getUpdatedMetadata() throws Exception
+    {
+        Map<String, byte[]> modifiedMetadata = new HashMap<String, byte[]>();
 
-        if (prevCommit == null){
-            newChangeSet = getContents();
-        }else{
-            newChangeSet.addAll(additions);
-            newChangeSet.addAll(modificationsNew);
+        for (DiffEntry diff : diffs)
+        {
+            if (diff.getChangeType().toString().equals("MODIFY"))
+            {
+                String item = SMAUtility.checkMeta(diff.getNewPath());
+                if (!modifiedMetadata.containsKey(item))
+                {
+                    modifiedMetadata.put(diff.getNewPath(), getBlob(diff.getNewPath(), curCommit));
+                }
+            }
+        }
+        return modifiedMetadata;
+    }
+
+    /**
+     * Returns all of the modified (old paths) changes in the current commit.
+     *
+     * @return ArrayList containing the items that were modified (old paths).
+     */
+    public Map<String, byte[]> getOriginalMetadata() throws Exception
+    {
+        Map<String, byte[]> originalMetadata = new HashMap<String, byte[]>();
+
+        for (DiffEntry diff : diffs)
+        {
+            if (diff.getChangeType().toString().equals("MODIFY"))
+            {
+                String item = SMAUtility.checkMeta(diff.getOldPath());
+                if (!originalMetadata.containsKey(item))
+                {
+                    originalMetadata.put(diff.getOldPath(), getBlob(diff.getOldPath(), prevCommit));
+                }
+            }
         }
 
-        return newChangeSet;
+        return originalMetadata;
     }
 
     /**
-     * Returns all of the deleted or modified (old paths) changes in the current commit.
-     * @return ArrayList containing the items that were modified (old paths) and deleted from the repository.
-     */
-    public ArrayList<String> getOldChangeSet(){
-        ArrayList<String> oldChangeSet = new ArrayList<String>();
-        oldChangeSet.addAll(deletions);
-        oldChangeSet.addAll(modificationsOld);
-
-        return oldChangeSet;
-    }
-
-
-    /**
-     * Checks out the previous commit's files that were modified or deleted and copies them to the rollback stage.
-     * @param destDir The location of the rollback stage.
+     * Returns the blob information for the file at the specified path and commit
+     *
+     * @param repoItem
+     * @param commit
+     * @return
      * @throws Exception
      */
-    public void getPrevCommitFiles(ArrayList<SMAMetadata> members, String destDir) throws Exception{
-        ObjectId prevCommitId = repository.resolve(prevCommit);
+    public byte[] getBlob(String repoItem, String commit) throws Exception
+    {
+        byte[] data;
 
-        RevWalk revWalk = new RevWalk(repository);
-        RevCommit commit = revWalk.parseCommit(prevCommitId);
-        RevTree tree = commit.getTree();
-        TreeWalk treeWalk;
+        String parentPath = repository.getDirectory().getParent();
 
-        for(SMAMetadata file : members){
-            treeWalk = new TreeWalk(repository);
-            treeWalk.addTree(tree);
-            treeWalk.setRecursive(true);
-            String fullName = file.getPath() + file.getFullName();
-            treeWalk.setFilter(PathFilter.create(fullName));
-            if(!treeWalk.next()){
-                throw new IllegalStateException("Did not find expected file '" +
-                fullName + "'");
-            }
-            ObjectId objectId = treeWalk.getObjectId(0);
-            ObjectLoader loader = repository.open(objectId);
+        ObjectId commitId = repository.resolve(commit);
 
-            File destination = new File(destDir + "/" + file.getPath());
-            if(!destination.exists()){
-                destination.mkdirs();
-            }
-            File copy = new File(destDir + "/" + fullName);
-            FileOutputStream fop = new FileOutputStream(copy);
-            loader.copyTo(fop);
+        ObjectReader reader = repository.newObjectReader();
+        RevWalk revWalk = new RevWalk(reader);
+        RevCommit revCommit = revWalk.parseCommit(commitId);
+        RevTree tree = revCommit.getTree();
+        TreeWalk treeWalk = TreeWalk.forPath(reader, repoItem, tree);
+
+        if (treeWalk != null)
+        {
+            data = reader.open(treeWalk.getObjectId(0)).getBytes();
+        }
+        else
+        {
+            throw new IllegalStateException("Did not find expected file '" + repoItem + "'");
         }
 
-        revWalk.dispose();
-    }
+        reader.release();
 
-
-    /**
-     * Creates an updated package.xml file and commits it to the repository
-     * @param workspace The workspace.
-     * @param userName The user name of the committer.
-     * @param userEmail The email of the committer.
-     * @return A boolean value indicating whether an update was required or not.
-     * @throws Exception
-     */
-    public boolean updatePackageXML(String workspace, String userName, String userEmail) throws Exception{
-        if (!getAdditions().isEmpty() || !getDeletions().isEmpty()){
-            SMAPackage packageManifest = new SMAPackage(workspace, getContents(), false);
-            SMAManifestGenerator.generateManifest(packageManifest);
-
-            //Commit the updated package.xml file to the repository
-            git.add().addFilepattern("src/package.xml").call();
-            git.commit().setCommitter(userName, userEmail).setMessage("Jenkins updated src/package.xml").call();
-
-            return true;
-        }
-        return false;
+        return data;
     }
 
     /**
      * Replicates ls-tree for the current commit.
-     * @return ArrayList containing the full path for all items in the repository.
+     *
+     * @return Map containing the full path and the data for all items in the repository.
      * @throws IOException
      */
-    public ArrayList<String> getContents() throws IOException{
-        contents = new ArrayList<String>();
+    public Map<String, byte[]> getAllMetadata() throws Exception
+    {
+        Map<String, byte[]> contents = new HashMap<String, byte[]>();
+        ObjectReader reader = repository.newObjectReader();
         ObjectId commitId = repository.resolve(curCommit);
-        RevWalk revWalk = new RevWalk(repository);
+        RevWalk revWalk = new RevWalk(reader);
         RevCommit commit = revWalk.parseCommit(commitId);
         RevTree tree = commit.getTree();
-        TreeWalk treeWalk = new TreeWalk(repository);
+        TreeWalk treeWalk = new TreeWalk(reader);
         treeWalk.addTree(tree);
         treeWalk.setRecursive(false);
 
-        while(treeWalk.next()){
-            if(treeWalk.isSubtree()){
+        while (treeWalk.next())
+        {
+            if (treeWalk.isSubtree())
+            {
                 treeWalk.enterSubtree();
             }
-            else {
+            else
+            {
                 String member = treeWalk.getPathString();
-                contents.add(member);
+                byte[] data = getBlob(member, curCommit);
+                contents.put(member, data);
             }
         }
+
+        reader.release();
 
         return contents;
     }
 
     /**
-     * Parses the diff between previous commit and current commit and sorts the changes into
-     * lists that correspond to the change made.
+     * Creates an updated package.xml file and commits it to the repository
+     *
+     * @param workspace The workspace.
+     * @param userName  The user name of the committer.
+     * @param userEmail The email of the committer.
+     * @param manifest  The SMAPackage representation of a package manifest
+     * @return A boolean value indicating whether an update was required or not.
      * @throws Exception
      */
-    private void determineChanges() throws Exception{
-        deletions = new ArrayList<String>();
-        additions = new ArrayList<String>();
-        modificationsNew = new ArrayList<String>();
-        modificationsOld = new ArrayList<String>();
+    public boolean updatePackageXML(String workspace,
+                                    String userName,
+                                    String userEmail,
+                                    SMAPackage manifest) throws Exception
+    {
+        File packageXml;
 
-        String item;
-        List<DiffEntry> diffs = getDiffs();
-        for (DiffEntry diff : diffs){
-            if (diff.getChangeType().toString().equals("DELETE")){
-                item = checkMeta(diff.getOldPath());
-                if(!deletions.contains(item)){
-                    deletions.add(item);
-                }
-            }else if (diff.getChangeType().toString().equals("ADD")){
-                additions.add(diff.getNewPath());
-                item = checkMeta(diff.getNewPath());
-                if(!additions.contains(item)){
-                    additions.add(item);
-                }
-            }else if (diff.getChangeType().toString().equals("MODIFY")){
-                item = checkMeta(diff.getNewPath());
-                if(!modificationsNew.contains(item)){
-                    modificationsNew.add(item);
-                }
+        // Only need to update the manifest if we have additions or deletions
+        if (!getNewMetadata().isEmpty() || !getDeletedMetadata().isEmpty())
+        {
+            // Fine the existing package.xml file in the repository
+            String packageLocation = SMAUtility.findPackage(new File(workspace));
 
-                item = checkMeta(diff.getOldPath());
-                if(!modificationsOld.contains(item)){
-                    modificationsOld.add(item);
-                }
+            if (!packageLocation.isEmpty())
+            {
+                packageXml = new File(packageLocation);
             }
+            else
+            {
+                // We couldn't find one, so just create one.
+                packageXml = new File(workspace + "/unpackaged/package.xml");
+                packageXml.getParentFile().mkdirs();
+                packageXml.createNewFile();
+            }
+
+            // Write the manifest to the location of the package.xml in the fs
+            FileOutputStream fos = new FileOutputStream(packageXml, false);
+            fos.write(manifest.getPackage().getBytes());
+            fos.close();
+
+            String path = packageXml.getPath();
+
+            // Commit the updated package.xml file to the repository
+            git.add().addFilepattern(path).call();
+            git.commit().setCommitter(userName, userEmail).setMessage("Jenkins updated package.xml").call();
+
+            return true;
         }
+
+        return false;
     }
 
     /**
      * Returns the diff between two commits.
+     *
      * @return List that contains DiffEntry objects of the changes made between the previous and current commits.
      * @throws Exception
      */
-    private List<DiffEntry> getDiffs() throws Exception{
-        CanonicalTreeParser previousTree = getTree(prevCommit);
+    private void getDiffs() throws Exception
+    {
+        OutputStream out = new ByteArrayOutputStream();
+        CanonicalTreeParser oldTree = getTree(prevCommit);
         CanonicalTreeParser newTree = getTree(curCommit);
-        return git.diff().setOldTree(previousTree).setNewTree(newTree).call();
+        DiffCommand diff = git.diff().setOutputStream(out).setOldTree(oldTree).setNewTree(newTree);
+        diffs = diff.call();
     }
 
     /**
-     * Returns the Canonical Tree Parser  representation of a commit.
+     * Returns the Canonical Tree Parser representation of a commit.
+     *
      * @param commit Commit in the repository.
      * @return CanonicalTreeParser representing the tree for the commit.
      * @throws IOException
      */
-    private CanonicalTreeParser getTree(String commit) throws IOException{
+    private CanonicalTreeParser getTree(String commit) throws IOException
+    {
         CanonicalTreeParser tree = new CanonicalTreeParser();
         ObjectReader reader = repository.newObjectReader();
         ObjectId head = repository.resolve(commit + "^{tree}");
         tree.reset(reader, head);
         return tree;
     }
-
-    private static String checkMeta(String repoItem){
-        String actualItem = repoItem;
-
-        if (repoItem.contains("-meta")){
-            actualItem = repoItem.substring(0, repoItem.length()-9);
-        }
-
-        return actualItem;
-    }
-
 }

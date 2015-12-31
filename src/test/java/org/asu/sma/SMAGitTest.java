@@ -2,12 +2,9 @@ package org.asu.sma;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,30 +12,40 @@ import org.junit.Test;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class SMAGitTest {
+public class SMAGitTest
+{
 
     private Repository repository;
     private SMAGit git;
-    private File addition, modification, deletion, localPath;
+    private File addition, addMeta;
+    private File modification, modifyMeta;
+    private File deletion, deleteMeta;
+    private File localPath;
     private String oldSha, newSha, gitDir;
+    private final String contents = "\n";
 
     /**
      * Before to setup the test.
+     *
      * @throws Exception
      */
     @Before
-    public void setUp() throws Exception{
+    public void setUp() throws Exception
+    {
         //Setup the fake repository
         localPath = File.createTempFile("TestGitRepository", "");
         localPath.delete();
         repository = FileRepositoryBuilder.create(new File(localPath, ".git"));
         repository.create();
 
-        File classesPath = new File(repository.getDirectory().getParent() + "/src/class");
+        File classesPath = new File(repository.getDirectory().getParent() + "/src/classes");
         classesPath.mkdirs();
         File pagesPath = new File(repository.getDirectory().getParent() + "/src/pages");
         pagesPath.mkdirs();
@@ -47,18 +54,14 @@ public class SMAGitTest {
 
 
         //Add the first collection of files
-        deletion = new File(classesPath, "deleteThis.cls");
-        modification = new File(pagesPath, "modifyThis.page");
-        deletion.createNewFile();
-        modification.createNewFile();
-        PrintWriter print = new PrintWriter(deletion);
-        print.println("This is the deleteThis file contents.");
-        print.close();
-        print = new PrintWriter(modification);
-        print.println("This is the modifyThis file contents.");
-        print.close();
-        new Git(repository).add().addFilepattern("src/class/deleteThis.cls").call();
+        deletion = createFile("deleteThis.cls", classesPath);
+        deleteMeta = createFile("deleteThis.cls-meta.xml", classesPath);
+        modification = createFile("modifyThis.page", pagesPath);
+        modifyMeta = createFile("modifyThis.page-meta.xml", pagesPath);
+        new Git(repository).add().addFilepattern("src/classes/deleteThis.cls").call();
+        new Git(repository).add().addFilepattern("src/classes/deleteThis.cls-meta.xml").call();
         new Git(repository).add().addFilepattern("src/pages/modifyThis.page").call();
+        new Git(repository).add().addFilepattern("src/pages/modifyThis.page-meta.xml").call();
 
         //Create the first commit
         RevCommit firstCommit = new Git(repository).commit().setMessage("Add deleteThis and modifyThis").call();
@@ -66,131 +69,172 @@ public class SMAGitTest {
 
 
         //Delete the deletion file, modify the modification file, and add the addition file
-        new Git(repository).rm().addFilepattern("src/class/deleteThis.cls").call();
+        new Git(repository).rm().addFilepattern("src/classes/deleteThis.cls").call();
+        new Git(repository).rm().addFilepattern("src/classes/deleteThis.cls-meta.xml").call();
         modification.setExecutable(true);
-        addition = new File(triggersPath, "addThis.trigger");
-        addition.createNewFile();
-        print = new PrintWriter(addition);
-        print.println("This is the addThis file contents.");
-        print.close();
+        addition = createFile("addThis.trigger", triggersPath);
+        addMeta = createFile("addThis.trigger-meta.xml", triggersPath);
         new Git(repository).add().addFilepattern("src/pages/modifyThis.page").call();
+        new Git(repository).add().addFilepattern("src/pages/modifyThis.page-meta.xml").call();
         new Git(repository).add().addFilepattern("src/triggers/addThis.trigger").call();
-        new Git(repository).add().addFilepattern("src/class/deleteThis.cls").call();
+        new Git(repository).add().addFilepattern("src/triggers/addThis.trigger-meta.xml").call();
+        new Git(repository).add().addFilepattern("src/classes/deleteThis.cls").call();
+        new Git(repository).add().addFilepattern("src/classes/deleteThis.cls-meta.xml").call();
 
         //Create the second commit
         RevCommit secondCommit = new Git(repository).commit().setMessage("Remove deleteThis. Modify " +
-                "modifyThis. Add addThis").call();
+                "modifyThis. Add addThis.").call();
         newSha = secondCommit.getName();
 
-        gitDir = localPath.getPath() + "/.git";
+        gitDir = localPath.getPath();
     }
 
     /**
      * After to tear down the test.
+     *
      * @throws Exception
      */
     @After
-    public void tearDown() throws Exception{
+    public void tearDown() throws Exception
+    {
         repository.close();
         FileUtils.deleteDirectory(localPath);
     }
 
     /**
      * Test the diff capability of the wrapper.
+     *
      * @throws Exception
      */
     @Test
-    public void testDiff() throws Exception {
-        ArrayList<String> expectedDelete = new ArrayList<String>();
-        expectedDelete.add("src/class/deleteThis.cls");
+    public void testDiff() throws Exception
+    {
+        Map<String, byte[]> expectedDelete = new HashMap<String, byte[]>();
+        expectedDelete.put("src/classes/deleteThis.cls", contents.getBytes());
 
-        ArrayList<String> expectedContents = new ArrayList<String>();
-        expectedContents.add("src/triggers/addThis.trigger");
-        expectedContents.add("src/pages/modifyThis.page");
+        Map<String, byte[]> expectedMods = new HashMap<String, byte[]>();
+        expectedMods.put("src/pages/modifyThis.page", contents.getBytes());
 
-        //Get the trees
-        ObjectReader reader = repository.newObjectReader();
-        CanonicalTreeParser oldTree = new CanonicalTreeParser();
-        CanonicalTreeParser newTree = new CanonicalTreeParser();
-        ObjectId oldHead = repository.resolve(oldSha + "^{tree}");
-        ObjectId newHead = repository.resolve(newSha + "^{tree}");
-        oldTree.reset(reader, oldHead);
-        newTree.reset(reader, newHead);
+        Map<String, byte[]> expectedAdds = new HashMap<String, byte[]>();
+        expectedAdds.put("src/triggers/addThis.trigger", contents.getBytes());
 
         git = new SMAGit(gitDir, newSha, oldSha);
 
-        ArrayList<String> deletedContents = git.getDeletions();
-        ArrayList<String> newContents = git.getNewChangeSet();
+        Map<String, byte[]> deletedContents = git.getDeletedMetadata();
+        Map<String, byte[]> modifiedContents = git.getUpdatedMetadata();
+        Map<String, byte[]> addedContents = git.getNewMetadata();
 
-        assertEquals(expectedDelete, deletedContents);
-        assertEquals(expectedContents, newContents);
+        assertEquals(expectedAdds.size(), addedContents.size());
+        assertEquals(expectedMods.size(), modifiedContents.size());
+        assertEquals(expectedDelete.size(), deletedContents.size());
     }
 
     /**
      * Test the overloaded constructors.
+     *
      * @throws Exception
      */
     @Test
-    public void testInitialCommit() throws Exception{
-        ArrayList<String> expectedContents = new ArrayList<String>();
-        expectedContents.add("src/pages/modifyThis.page");
-        expectedContents.add("src/triggers/addThis.trigger");
+    public void testInitialCommit() throws Exception
+    {
+        Map<String, byte[]> expectedContents = new HashMap<String, byte[]>();
+        expectedContents.put("src/pages/modifyThis.page", contents.getBytes());
+        expectedContents.put("src/pages/modifyThis.page-meta.xml", contents.getBytes());
+        expectedContents.put("src/triggers/addThis.trigger", contents.getBytes());
+        expectedContents.put("src/triggers/addThis.trigger-meta.xml", contents.getBytes());
 
         git = new SMAGit(gitDir, newSha);
 
-        ArrayList<String> contents = git.getNewChangeSet();
+        Map<String, byte[]> allMetadata = git.getAllMetadata();
 
-        assertEquals(expectedContents, contents);
-    }
-
-    /**
-     * Test the rollback capability.
-     * @throws Exception
-     */
-    @Test
-    public void testRollback() throws Exception{
-        ArrayList<String> expectedContents = new ArrayList<String>();
-        expectedContents.add("src/class/deleteThis.cls");
-        expectedContents.add("src/pages/modifyThis.page");
-
-        git = new SMAGit(gitDir, newSha, oldSha);
-
-        ArrayList<String> contents = git.getOldChangeSet();
-
-        assertEquals(expectedContents, contents);
-    }
-
-    /**
-     * Test the retrieval of the previous commit's files.
-     * @throws Exception
-     */
-    @Test
-    public void testGetPrevCommitFiles() throws Exception{
-        git = new SMAGit(gitDir, newSha, oldSha);
-
-        ArrayList<String> destructiveChanges = git.getAdditions();
-        ArrayList<String> changes = git.getOldChangeSet();
-        String destination = localPath.getPath() + "/rollback";
-
-        ArrayList<SMAMetadata> results = SMAUtility.generate(destructiveChanges, changes,
-                destination);
-
-        git.getPrevCommitFiles(results, destination);
-
-        for(SMAMetadata result : results){
-            File rollbackVersion = new File(destination + "/" + result.getPath() + result.getFullName());
-            assertTrue(rollbackVersion.exists());
-        }
+        assertEquals(expectedContents.size(), allMetadata.size());
     }
 
     /**
      * Test the ability to update the package manifest.
+     *
      * @throws Exception
      */
     @Test
-    public void testCommitPackageXML() throws Exception{
-        git = new SMAGit(gitDir, newSha, oldSha);
+    public void testCommitPackageXML() throws Exception
+    {
+        Map<String, byte[]> metadataContents = new HashMap<String, byte[]>();
+        List<SMAMetadata> metadata = new ArrayList<SMAMetadata>();
 
-        assertTrue(git.updatePackageXML(localPath.getPath() + "/src/package.xml", "Test Guy", "testguy@example.net"));
+        git = new SMAGit(gitDir, newSha, oldSha);
+        metadataContents = git.getUpdatedMetadata();
+        metadataContents.putAll(git.getNewMetadata());
+
+        for (String s : metadataContents.keySet())
+        {
+            metadata.add(SMAMetadataTypes.createMetadataObject(s, metadataContents.get(s)));
+        }
+
+        SMAPackage manifest = new SMAPackage(metadata, false);
+
+        Boolean createdManifest = git.updatePackageXML(
+                localPath.getPath(),
+                "Test Guy",
+                "testguy@example.net",
+                manifest
+        );
+
+        assertTrue(createdManifest);
+    }
+
+    /**
+     * Test the ability to update the package manifest.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCommitExistingPackage() throws Exception
+    {
+        File sourceDir = new File(localPath.getPath() + "/src");
+        File existingPackage = createFile("package.xml", sourceDir);
+
+        new Git(repository).add().addFilepattern("src/package.xml").call();
+        new Git(repository).commit().setMessage("Add package.xml").call();
+
+        Map<String, byte[]> metadataContents = new HashMap<String, byte[]>();
+        List<SMAMetadata> metadata = new ArrayList<SMAMetadata>();
+
+        git = new SMAGit(gitDir, newSha, oldSha);
+        metadataContents = git.getUpdatedMetadata();
+        metadataContents.putAll(git.getNewMetadata());
+
+        for (String s : metadataContents.keySet())
+        {
+            metadata.add(SMAMetadataTypes.createMetadataObject(s, metadataContents.get(s)));
+        }
+
+        SMAPackage manifest = new SMAPackage(metadata, false);
+
+        Boolean createdManifest = git.updatePackageXML(
+                localPath.getPath(),
+                "Test Guy",
+                "testguy@example.net",
+                manifest
+        );
+
+        assertTrue(createdManifest);
+
+        // Also check to make sure we didn't create the default package
+        File unexpectedPackage = new File(localPath.getPath() + "/unpackaged/package.xml");
+        assertTrue(!unexpectedPackage.exists());
+    }
+
+    private File createFile(String name, File path) throws Exception
+    {
+        File thisFile;
+
+        thisFile = new File(path, name);
+        thisFile.createNewFile();
+
+        PrintWriter print = new PrintWriter(thisFile);
+        print.println(contents);
+        print.close();
+
+        return thisFile;
     }
 }
