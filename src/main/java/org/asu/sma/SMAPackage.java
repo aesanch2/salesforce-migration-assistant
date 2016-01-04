@@ -39,8 +39,6 @@ public class SMAPackage
         packageManifest = new Package();
         packageManifest.setVersion(SMAMetadataTypes.getAPIVersion());
         packageManifest.setTypes((PackageTypeMembers[]) determinePackageTypes().toArray(new PackageTypeMembers[0]));
-
-
     }
 
     public List<SMAMetadata> getContents()
@@ -48,6 +46,10 @@ public class SMAPackage
         return contents;
     }
 
+    /**
+     * Returns the name of the manifest file for this SMAPackage
+     * @return
+     */
     public String getName()
     {
         String name;
