@@ -64,6 +64,13 @@ public class SMAUtility
         return baos;
     }
 
+    /**
+     * Helper to write the zip to a file location
+     *
+     * @param zipBytes
+     * @param location
+     * @throws Exception
+     */
     public static void writeZip(ByteArrayOutputStream zipBytes, String location) throws Exception
     {
         FileOutputStream fos = new FileOutputStream(location);
@@ -122,6 +129,12 @@ public class SMAUtility
         return actualItem;
     }
 
+    /**
+     * Prints a set of metadata names to the Jenkins console
+     *
+     * @param listener
+     * @param metadataList
+     */
     public static void printMetadataToConsole(BuildListener listener, List<SMAMetadata> metadataList)
     {
         // Sorts by extension, then by member name
@@ -135,6 +148,13 @@ public class SMAUtility
         listener.getLogger().println();
     }
 
+    /**
+     * Searches for a possible unit tests in the repository for a given set of metadata
+     *
+     * @param allMetadata
+     * @param testClassRegex
+     * @return
+     */
     public static String searchForTestClass(List<String> allMetadata, String testClassRegex)
     {
         String match = "noneFound";

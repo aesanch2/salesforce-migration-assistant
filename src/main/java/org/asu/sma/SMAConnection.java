@@ -10,6 +10,8 @@ import java.io.ByteArrayOutputStream;
 import java.text.DecimalFormat;
 
 /**
+ * This class handles the API connection and actions against the Salesforce instance
+ *
  * @author aesanch2
  */
 public class SMAConnection
@@ -28,6 +30,17 @@ public class SMAConnection
     private DeployDetails deployDetails;
     private double API_VERSION;
 
+    /**
+     * Constructor that sets up the connection to a Salesforce organization
+     *
+     * @param username
+     * @param password
+     * @param securityToken
+     * @param server
+     * @param pollWaitString
+     * @param maxPollString
+     * @throws Exception
+     */
     public SMAConnection(String username,
                          String password,
                          String securityToken,
@@ -58,6 +71,16 @@ public class SMAConnection
         metadataConnection = new MetadataConnection(metadataConfig);
     }
 
+    /**
+     * Sets configuration and performs the deployment of metadata to a Salesforce organization
+     *
+     * @param bytes
+     * @param validateOnly
+     * @param testLevel
+     * @param specifiedTests
+     * @return
+     * @throws Exception
+     */
     public boolean deployToServer(ByteArrayOutputStream bytes,
                                   boolean validateOnly,
                                   TestLevel testLevel,
@@ -113,6 +136,11 @@ public class SMAConnection
         return deployResult.isSuccess();
     }
 
+    /**
+     * Returns a formatted string of test failures for printing to the Jenkins console
+     *
+     * @return
+     */
     public String getTestFailures()
     {
         RunTestsResult rtr = deployDetails.getRunTestResult();
@@ -134,6 +162,11 @@ public class SMAConnection
         return buf.toString();
     }
 
+    /**
+     * Returns a formatted string of component failures for printing to the Jenkins console
+     *
+     * @return
+     */
     public String getComponentFailures()
     {
         DeployMessage messages[] = deployDetails.getComponentFailures();
@@ -165,6 +198,11 @@ public class SMAConnection
         return buf.toString();
     }
 
+    /**
+     * Returns a formatted string of the code coverage information for this deployment
+     *
+     * @return
+     */
     public String getCodeCoverage()
     {
         RunTestsResult rtr = deployDetails.getRunTestResult();
@@ -204,6 +242,11 @@ public class SMAConnection
         return buf.toString();
     }
 
+    /**
+     * Returns a formatted string of code coverage warnings for printing to the Jenkins console
+     *
+     * @return
+     */
     public String getCodeCoverageWarnings()
     {
         RunTestsResult rtr = deployDetails.getRunTestResult();
@@ -235,16 +278,32 @@ public class SMAConnection
         return buf.toString();
     }
 
+    /**
+     * Returns the DeployDetails from this deployment
+     *
+     * @return
+     */
     public DeployDetails getDeployDetails()
     {
         return deployDetails;
     }
 
+    /**
+     * Sets the DeployDetails for this deployment. For unit tests
+     *
+     * @param deployDetails
+     */
     public void setDeployDetails(DeployDetails deployDetails)
     {
         this.deployDetails = deployDetails;
     }
 
+    /**
+     * Helper method to calculate the total code coverage in this deployment
+     *
+     * @param ccresult
+     * @return
+     */
     private Double getTotalCodeCoverage(CodeCoverageResult[] ccresult)
     {
         double totalLoc = 0;
@@ -269,6 +328,13 @@ public class SMAConnection
         return coverage;
     }
 
+    /**
+     * Helper method to calculate the double for the coverage
+     *
+     * @param totalLocUncovered
+     * @param totalLoc
+     * @return
+     */
     private double calculateCoverage(double totalLocUncovered, double totalLoc)
     {
         return (1 - (totalLocUncovered / totalLoc)) * 100;

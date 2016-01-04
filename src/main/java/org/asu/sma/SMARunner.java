@@ -29,6 +29,12 @@ public class SMARunner
     private List<SMAMetadata> deleteMetadata = new ArrayList<SMAMetadata>();
     private List<SMAMetadata> rollbackMetadata = new ArrayList<SMAMetadata>();
 
+    /**
+     * Wrapper for coordinating the configuration of the running job
+     *
+     * @param jobVariables
+     * @throws Exception
+     */
     public SMARunner(EnvVars jobVariables) throws Exception
     {
         // Get envvars to initialize SMAGit
@@ -57,11 +63,22 @@ public class SMARunner
         }
     }
 
+    /**
+     * Returns whether the current job is set to deploy all the metadata in the repository
+     *
+     * @return deployAll
+     */
     public Boolean getDeployAll()
     {
         return deployAll;
     }
 
+    /**
+     * Returns the SMAMetadata that is going to be deployed in this job
+     *
+     * @return
+     * @throws Exception
+     */
     public List<SMAMetadata> getPackageMembers() throws Exception
     {
         if (deployAll)
@@ -79,6 +96,12 @@ public class SMARunner
         return deployMetadata;
     }
 
+    /**
+     * Returns the SMAMetadata that is going to be deleted in this job
+     *
+     * @return
+     * @throws Exception
+     */
     public List<SMAMetadata> getDestructionMembers() throws Exception
     {
         if (deleteMetadata.isEmpty())
@@ -91,6 +114,12 @@ public class SMARunner
         return deleteMetadata;
     }
 
+    /**
+     * Returns a map with the file name mapped to the byte contents of the metadata
+     *
+     * @return
+     * @throws Exception
+     */
     public Map<String, byte[]> getDeploymentData() throws Exception
     {
         if (deployMetadata.isEmpty())
@@ -101,6 +130,12 @@ public class SMARunner
         return getData(deployMetadata, currentCommit);
     }
 
+    /**
+     * Returns a map with the file name mapped to the byte contents of the metadata. Used for rollback creation
+     *
+     * @return
+     * @throws Exception
+     */
     public Map<String, byte[]> getRollbackData() throws Exception
     {
         if (deleteMetadata.isEmpty())
@@ -115,6 +150,14 @@ public class SMARunner
         return getData(rollbackMetadata, previousSuccessfulCommit);
     }
 
+    /**
+     * Helper method to find the byte[] contents of given metadata
+     *
+     * @param metadatas
+     * @param commit
+     * @return
+     * @throws Exception
+     */
     private Map<String, byte[]> getData(List<SMAMetadata> metadatas, String commit) throws Exception
     {
         Map<String, byte[]> data = new HashMap<String, byte[]>();
@@ -134,6 +177,13 @@ public class SMARunner
         return data;
     }
 
+    /**
+     * Constructs a list of SMAMetadata objects from a Map of files and their byte[] contents
+     *
+     * @param repoItems
+     * @return
+     * @throws Exception
+     */
     private List<SMAMetadata> buildMetadataList(Map<String, byte[]> repoItems) throws Exception
     {
         List<SMAMetadata> thisMetadata = new ArrayList<SMAMetadata>();
@@ -150,6 +200,13 @@ public class SMARunner
         return thisMetadata;
     }
 
+    /**
+     * Returns a String array of all the unit tests that should be run in this job
+     *
+     * @param testRegex
+     * @return
+     * @throws Exception
+     */
     public String[] getSpecifiedTests(String testRegex) throws Exception
     {
         List<String> specifiedTestsList = new ArrayList<String>();
