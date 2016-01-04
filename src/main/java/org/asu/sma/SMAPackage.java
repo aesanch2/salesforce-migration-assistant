@@ -1,109 +1,128 @@
 package org.asu.sma;
 
+import com.sforce.soap.metadata.Package;
+import com.sforce.soap.metadata.PackageTypeMembers;
+import com.sforce.ws.bind.TypeMapper;
+import com.sforce.ws.parser.XmlOutputStream;
+
+import javax.xml.namespace.QName;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Helper class for generating both build.xml and package.xml files.
+ * Wrapper for com.sforce.soap.metadata.Package.
+ *
  * @author aesanch2
  */
-public class SMAPackage {
-    private String destination;
-    private String workspace;
-    private ArrayList<String> contents;
+public class SMAPackage
+{
+    private List<SMAMetadata> contents;
     private boolean destructiveChange;
-    //Project configuration variables
-    private boolean validateOnly;
-    private boolean generateUnitTests;
-    private String username;
-    private String password;
-    private String server;
-    //Global configuration variables
-    private String pluginHome;
-    private String runTestRegex;
-    private String pollWait;
-    private String maxPoll;
+    private Package packageManifest;
 
     /**
-     * Constructor for manifest SMAPackage
-     * @param destination
+     * Constructor for SMAPackage
+     * Takes the SMAMetdata contents that are to be represented by the manifest file and generates a Package for deployment
+     *
      * @param contents
      * @param destructiveChange
      */
-    public SMAPackage(String destination, ArrayList<String> contents,
-                      boolean destructiveChange){
-        this.destination = destination;
+    public SMAPackage(List<SMAMetadata> contents,
+                      boolean destructiveChange) throws Exception
+    {
         this.contents = contents;
         this.destructiveChange = destructiveChange;
 
-        //Modify the location of the SMAPackage based on what xml file we're representing.
-        if(destructiveChange){
-            this.destination = destination + "/src/destructiveChanges.xml";
-        } else {
-            this.destination = destination + "/src/package.xml";
-        }
+        packageManifest = new Package();
+        packageManifest.setVersion(SMAMetadataTypes.getAPIVersion());
+        packageManifest.setTypes((PackageTypeMembers[]) determinePackageTypes().toArray(new PackageTypeMembers[0]));
+    }
+
+    public List<SMAMetadata> getContents()
+    {
+        return contents;
     }
 
     /**
-     * Constructor for build SMAPackage
-     * @param destination
-     * @param contents
-     * @param jenkinsHome
-     * @param runTestRegex
-     * @param pollWait
-     * @param generateUnitTests
-     * @param validateOnly
+     * Returns the name of the manifest file for this SMAPackage
+     * @return
      */
-    public SMAPackage(String destination, ArrayList<String> contents, String jenkinsHome,
-                      String runTestRegex, String pollWait, String maxPoll,
-                      boolean generateUnitTests, boolean validateOnly,
-                      String username, String password, String server){
-        this.contents = contents;
-        this.runTestRegex = runTestRegex;
-        this.pollWait = pollWait;
-        this.maxPoll = maxPoll;
-        this.generateUnitTests = generateUnitTests;
-        this.validateOnly = validateOnly;
-        this.username = username;
-        this.server = server;
+    public String getName()
+    {
+        String name;
 
-        if (password.isEmpty()){
-            this.password = "{$sf.password}";
-        }else{
-            this.password = password;
+        if (destructiveChange)
+        {
+            name = "destructiveChanges.xml";
+        } else
+        {
+            name = "package.xml";
         }
 
-        //SMA's plugin directory for locating the ant-salesforce.jar
-        pluginHome = jenkinsHome + "/plugins/sma";
-
-        //Modify the location of the SMAPackage for the build file
-        this.destination = destination + "/build/build.xml";
-        this.workspace = destination + "/src";
+        return name;
     }
 
-    public String getDestination() { return destination; }
+    /**
+     * Transforms the Package into a ByteArray
+     *
+     * @return String(packageStream.toByteArray())
+     * @throws Exception
+     */
+    public String getPackage() throws Exception
+    {
+        TypeMapper typeMapper = new TypeMapper();
+        ByteArrayOutputStream packageStream = new ByteArrayOutputStream();
+        QName packageQName = new QName("http://soap.sforce.com/2006/04/metadata", "Package");
+        XmlOutputStream xmlOutputStream = new XmlOutputStream(packageStream, true);
+        xmlOutputStream.setPrefix("", "http://soap.sforce.com/2006/04/metadata");
+        xmlOutputStream.setPrefix("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+        packageManifest.write(packageQName, xmlOutputStream, typeMapper);
+        xmlOutputStream.close();
 
-    public String getWorkspace() { return workspace; }
+        return new String(packageStream.toByteArray());
+    }
 
-    public ArrayList<String> getContents() { return contents; }
+    /**
+     * Sorts the metadata into types and members for the manifest
+     *
+     * @return
+     */
+    private List<PackageTypeMembers> determinePackageTypes()
+    {
+        List<PackageTypeMembers> types = new ArrayList<PackageTypeMembers>();
+        Map<String, List<String>> contentsByType = new HashMap<String, List<String>>();
 
-    public boolean isDestructiveChange() { return destructiveChange; }
+        // Sort the metadata objects by metadata type
+        for (SMAMetadata mdObject : contents)
+        {
+            if (destructiveChange && !mdObject.isDestructible())
+            {
+                // Don't include non destructible metadata in destructiveChanges
+                continue;
+            }
+            else if (contentsByType.containsKey(mdObject.getMetadataType()))
+            {
+                contentsByType.get(mdObject.getMetadataType()).add(mdObject.getMember());
+            } else
+            {
+                List<String> memberList = new ArrayList<String>();
+                memberList.add(mdObject.getMember());
+                contentsByType.put(mdObject.getMetadataType(), memberList);
+            }
+        }
 
-    public boolean isValidateOnly() { return validateOnly; }
+        // Put the members into list of PackageTypeMembers
+        for (String metadataType : contentsByType.keySet())
+        {
+            PackageTypeMembers members = new PackageTypeMembers();
+            members.setName(metadataType);
+            members.setMembers((String[]) contentsByType.get(metadataType).toArray(new String[0]));
+            types.add(members);
+        }
 
-    public boolean isGenerateUnitTests() { return generateUnitTests; }
-
-    public String getPluginHome() { return pluginHome; }
-
-    public String getRunTestRegex() { return runTestRegex; }
-
-    public String getPollWait() { return pollWait; }
-
-    public String getMaxPoll() { return maxPoll; }
-
-    public String getUsername() { return username; }
-
-    public String getServer() { return server; }
-
-    public String getPassword() { return password; }
-
+        return types;
+    }
 }

@@ -12,14 +12,14 @@
     so it should be straightforward to find them.
   -->
   <f:section title="Salesforce Migration Assistant">
-      <f:entry title="Test Class Filter" field="runTestRegex">
-          <f:textbox default="${descriptor.runTestRegex}"/>
-      </f:entry>
       <f:entry title="Poll Wait (ms)" field="pollWait">
           <f:textbox default="${descriptor.pollWait}"/>
       </f:entry>
       <f:entry title="Max Poll" field="maxPoll">
           <f:textbox default="${descriptor.maxPoll}"/>
       </f:entry>
+      <f:entry title="Test Regex" field="runTestRegex">
+                <f:textbox default="${descriptor.runTestRegex}"/>
+            </f:entry>
   </f:section>
 </j:jelly>

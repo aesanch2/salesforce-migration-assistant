@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<version API="32.0">
+<version API="34.0">
     <extension name="app">
         <metadata>CustomApplication</metadata>
         <container>applications</container>
