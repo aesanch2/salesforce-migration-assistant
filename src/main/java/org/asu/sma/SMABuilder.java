@@ -118,6 +118,24 @@ public class SMABuilder extends Builder
                 writeToConsole.println(sfConnection.getCodeCoverageWarnings());
                 writeToConsole.println(sfConnection.getCodeCoverage());
                 writeToConsole.println("[SMA] Deployment Succeeded");
+
+                SMAPackage rollbackPackageXml = new SMAPackage(
+                        currentJob.getRollbackMetadata(),
+                        false
+                );
+
+                SMAPackage rollbackDestructiveChange = new SMAPackage(
+                        currentJob.getRollbackAdditions(),
+                        true
+                );
+
+                ByteArrayOutputStream rollbackPackage = SMAUtility.zipPackage(
+                        currentJob.getRollbackData(),
+                        rollbackPackageXml,
+                        rollbackDestructiveChange
+                );
+
+                SMAUtility.writeZip(rollbackPackage, currentJob.getRollbackLocation());
             }
             else
             {

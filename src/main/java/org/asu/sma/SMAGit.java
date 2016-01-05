@@ -78,6 +78,35 @@ public class SMAGit
     }
 
     /**
+     * Creates an SMAGit instance for a ghprb build
+     *
+     * @param pathToWorkspace
+     * @param curCommit
+     * @param targetBranch
+     * @throws Exception
+     */
+    public SMAGit(String pathToWorkspace,
+                  String curCommit,
+                  String targetBranch,
+                  String sourceBranch) throws Exception
+    {
+        this.pathToWorkspace = pathToWorkspace;
+        String pathToRepo = pathToWorkspace + "/.git";
+        File repoDir = new File(pathToRepo);
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        repository = builder.setGitDir(repoDir).readEnvironment().build();
+        git = new Git(repository);
+        this.curCommit = curCommit;
+
+        ObjectId branchId = repository.resolve(targetBranch);
+        RevCommit targetCommit = new RevWalk(repository).parseCommit(branchId);
+
+        this.prevCommit = targetCommit.getName();
+
+        getDiffs();
+    }
+
+    /**
      * Returns all of the items that were added in the current commit.
      *
      * @return The ArrayList containing all of the additions in the current commit.
@@ -298,6 +327,22 @@ public class SMAGit
 
         return false;
     }
+
+    public Git getRepo()
+    {
+        return git;
+    }
+
+    public String getPrevCommit()
+    {
+        return prevCommit;
+    }
+
+    public String getCurCommit()
+    {
+        return curCommit;
+    }
+
 
     /**
      * Returns the diff between two commits.
