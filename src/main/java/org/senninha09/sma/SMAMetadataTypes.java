@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.senninha09.sma;
 
 /**
  * Created by aesanch2 on 12/4/15.

@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.senninha09.sma;
 
 import org.junit.Before;
 import org.junit.Test;

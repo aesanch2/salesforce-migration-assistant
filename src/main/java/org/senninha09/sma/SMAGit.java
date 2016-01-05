@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.senninha09.sma;
 
 import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
@@ -342,7 +342,6 @@ public class SMAGit
     {
         return curCommit;
     }
-
 
     /**
      * Returns the diff between two commits.

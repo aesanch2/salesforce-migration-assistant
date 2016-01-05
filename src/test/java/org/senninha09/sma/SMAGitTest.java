@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.senninha09.sma;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.CreateBranchCommand;

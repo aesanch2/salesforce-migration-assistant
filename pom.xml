@@ -8,8 +8,8 @@
 
   <artifactId>sma</artifactId>
   <name>Salesforce Migration Assistant</name>
-  <version>2.0</version>
-  <packaging>hpi</packaging>
+  <version>2.1</version>
+  <packaging>jpi</packaging>
 
   <licenses>
     <license>
@@ -39,9 +39,9 @@
 
     <developers>
         <developer>
-            <id>aesanch2</id>
+            <id>senninha09</id>
             <name>Anthony Sanchez</name>
-            <email>aesanch2@asu.edu</email>
+            <email>senninha09@gmail.com</email>
         </developer>
     </developers>
 
