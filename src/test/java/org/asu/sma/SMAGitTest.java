@@ -1,6 +1,7 @@
 package org.asu.sma;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -144,6 +145,33 @@ public class SMAGitTest
         expectedContents.put("src/triggers/addThis.trigger-meta.xml", contents.getBytes());
 
         git = new SMAGit(gitDir, newSha);
+
+        Map<String, byte[]> allMetadata = git.getAllMetadata();
+
+        assertEquals(expectedContents.size(), allMetadata.size());
+    }
+
+    /**
+     * Test the ghprb constructor.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testGhprb() throws Exception
+    {
+        Map<String, byte[]> expectedContents = new HashMap<String, byte[]>();
+        expectedContents.put("src/pages/modifyThis.page", contents.getBytes());
+        expectedContents.put("src/pages/modifyThis.page-meta.xml", contents.getBytes());
+        expectedContents.put("src/triggers/addThis.trigger", contents.getBytes());
+        expectedContents.put("src/triggers/addThis.trigger-meta.xml", contents.getBytes());
+
+        String oldBranch = "oldBranch";
+        CreateBranchCommand cbc = new Git(repository).branchCreate();
+        cbc.setName(oldBranch);
+        cbc.setStartPoint(oldSha);
+        cbc.call();
+
+        git = new SMAGit(gitDir, newSha, oldBranch, "master");
 
         Map<String, byte[]> allMetadata = git.getAllMetadata();
 

@@ -19,15 +19,17 @@ public class SMARunner
 
     private static final Logger LOG = Logger.getLogger(SMARunner.class.getName());
 
-    private Boolean deployAll;
+    private Boolean deployAll = false;
     private String currentCommit;
-    private String previousSuccessfulCommit;
+    private String previousCommit;
+    private String rollbackLocation;
     private SMAGit git;
     private SMAPackage manifest;
     private File rollbackPath;
     private List<SMAMetadata> deployMetadata = new ArrayList<SMAMetadata>();
     private List<SMAMetadata> deleteMetadata = new ArrayList<SMAMetadata>();
     private List<SMAMetadata> rollbackMetadata = new ArrayList<SMAMetadata>();
+    private List<SMAMetadata> rollbackAdditions = new ArrayList<SMAMetadata>();
 
     /**
      * Wrapper for coordinating the configuration of the running job
@@ -38,29 +40,57 @@ public class SMARunner
     public SMARunner(EnvVars jobVariables) throws Exception
     {
         // Get envvars to initialize SMAGit
-        deployAll = Boolean.valueOf(jobVariables.get("SMA_DEPLOY_ALL_METADATA"));
-        previousSuccessfulCommit = jobVariables.get("GIT_PREVIOUS_SUCCESSFUL_COMMIT");
+        Boolean shaOverride = false;
         currentCommit = jobVariables.get("GIT_COMMIT");
+        Boolean ghprbJob = Boolean.valueOf(jobVariables.get("BUILD_CAUSE_GHPRBCAUSE"));
         String pathToWorkspace = jobVariables.get("WORKSPACE");
         String jenkinsHome = jobVariables.get("JENKINS_HOME");
         String jobName = jobVariables.get("JOB_NAME");
         String buildNumber = jobVariables.get("BUILD_NUMBER");
-        String shaOverride = jobVariables.get("SMA_PREVIOUS_COMMIT_OVERRIDE");
 
-        if (!shaOverride.isEmpty())
+        if (jobVariables.containsKey("GIT_PREVIOUS_SUCCESSFUL_COMMIT"))
         {
-            previousSuccessfulCommit = shaOverride;
-        }
-
-        if (deployAll || previousSuccessfulCommit == null)
-        {
-            deployAll = true;
-            git = new SMAGit(pathToWorkspace, currentCommit);
+            previousCommit = jobVariables.get("GIT_PREVIOUS_SUCCESSFUL_COMMIT");
         }
         else
         {
-            git = new SMAGit(pathToWorkspace, currentCommit, previousSuccessfulCommit);
+            deployAll = true;
         }
+
+        if (jobVariables.containsKey("SMA_DEPLOY_ALL_METADATA"))
+        {
+            deployAll = Boolean.valueOf(jobVariables.get("SMA_DEPLOY_ALL_METADATA"));
+        }
+
+        if (jobVariables.containsKey("SMA_PREVIOUS_COMMIT_OVERRIDE"))
+        {
+            if (!jobVariables.get("SMA_PREVIOUS_COMMIT_OVERRIDE").isEmpty())
+            {
+                shaOverride = true;
+                previousCommit = jobVariables.get("SMA_PREVIOUS_COMMIT_OVERRIDE");
+            }
+        }
+
+
+        // Configure using ghprb logic, unless there is an overridden previous commit
+        if (ghprbJob && !shaOverride)
+        {
+            String ghprbTargetBranch = jobVariables.get("ghprbTargetBranch");
+            String ghprbSourceBranch = jobVariables.get("ghprbSourceBranch");
+            git = new SMAGit(pathToWorkspace, currentCommit, ghprbTargetBranch, ghprbSourceBranch);
+        }
+        // Configure for all the metadata
+        else if (deployAll)
+        {
+            git = new SMAGit(pathToWorkspace, currentCommit);
+        }
+        // Configure using the previous successful commit for this job
+        else
+        {
+            git = new SMAGit(pathToWorkspace, currentCommit, previousCommit);
+        }
+
+        rollbackLocation = pathToWorkspace + "/sma/rollback" + jobName + buildNumber + ".zip";
     }
 
     /**
@@ -114,6 +144,28 @@ public class SMARunner
         return deleteMetadata;
     }
 
+    public List<SMAMetadata> getRollbackMetadata() throws Exception
+    {
+        if (deleteMetadata.isEmpty())
+        {
+            getDestructionMembers();
+        }
+
+        rollbackMetadata = new ArrayList<SMAMetadata>();
+        rollbackMetadata.addAll(deleteMetadata);
+        rollbackMetadata.addAll(buildMetadataList(git.getOriginalMetadata()));
+
+        return rollbackMetadata;
+    }
+
+    public List<SMAMetadata> getRollbackAdditions() throws Exception
+    {
+        rollbackAdditions = new ArrayList<SMAMetadata>();
+        rollbackAdditions.addAll(buildMetadataList(git.getNewMetadata()));
+
+        return rollbackAdditions;
+    }
+
     /**
      * Returns a map with the file name mapped to the byte contents of the metadata
      *
@@ -130,24 +182,14 @@ public class SMARunner
         return getData(deployMetadata, currentCommit);
     }
 
-    /**
-     * Returns a map with the file name mapped to the byte contents of the metadata. Used for rollback creation
-     *
-     * @return
-     * @throws Exception
-     */
     public Map<String, byte[]> getRollbackData() throws Exception
     {
-        if (deleteMetadata.isEmpty())
+        if (rollbackMetadata.isEmpty())
         {
-            getDestructionMembers();
+            getRollbackMetadata();
         }
 
-        rollbackMetadata = new ArrayList<SMAMetadata>();
-        rollbackMetadata.addAll(deleteMetadata);
-        rollbackMetadata.addAll(buildMetadataList(git.getOriginalMetadata()));
-
-        return getData(rollbackMetadata, previousSuccessfulCommit);
+        return getData(rollbackMetadata, previousCommit);
     }
 
     /**
@@ -255,5 +297,17 @@ public class SMARunner
         specifiedTestsList.toArray(specifiedTests);
 
         return specifiedTests;
+    }
+
+    public String getRollbackLocation()
+    {
+        File rollbackLocationFile = new File(rollbackLocation);
+
+        if (!rollbackLocationFile.getParentFile().exists())
+        {
+            rollbackLocationFile.getParentFile().mkdirs();
+        }
+
+        return rollbackLocation;
     }
 }
