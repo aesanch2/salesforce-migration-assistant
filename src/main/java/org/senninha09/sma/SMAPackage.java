@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.senninha09.sma;
 
 import com.sforce.soap.metadata.Package;
 import com.sforce.soap.metadata.PackageTypeMembers;

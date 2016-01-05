@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.senninha09.sma;
 
 import com.google.common.io.Files;
 import com.sforce.soap.metadata.CodeCoverageResult;
