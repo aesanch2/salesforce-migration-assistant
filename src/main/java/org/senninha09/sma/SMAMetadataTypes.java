@@ -25,7 +25,7 @@ public class SMAMetadataTypes
     private static final Logger LOG = Logger.getLogger(SMAMetadataTypes.class.getName());
 
     private static final ClassLoader loader = SMAMetadataTypes.class.getClassLoader();
-    private static String pathToResource = loader.getResource("org/asu/sma/salesforceMetadata.xml").toString();
+    private static String pathToResource = loader.getResource("org/senninha09/sma/salesforceMetadata.xml").toString();
     private static Document doc;
     private static Boolean docAlive = false;
 

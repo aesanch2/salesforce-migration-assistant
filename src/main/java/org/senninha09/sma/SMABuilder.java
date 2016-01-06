@@ -1,12 +1,10 @@
-package org.asu.sma;
+package org.senninha09.sma;
 
 import com.sforce.soap.metadata.DeployResult;
 import com.sforce.soap.metadata.TestLevel;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
@@ -58,6 +56,7 @@ public class SMABuilder extends Builder
         boolean JOB_SUCCESS = false;
 
         PrintStream writeToConsole = listener.getLogger();
+        List<ParameterValue> parameterValues = new ArrayList<ParameterValue>();
 
         try
         {
@@ -117,6 +116,7 @@ public class SMABuilder extends Builder
             {
                 writeToConsole.println(sfConnection.getCodeCoverageWarnings());
                 writeToConsole.println(sfConnection.getCodeCoverage());
+                parameterValues.add(new StringParameterValue("smaDeployResult", sfConnection.getCodeCoverage() + sfConnection.getCodeCoverageWarnings()));
                 writeToConsole.println("[SMA] Deployment Succeeded");
 
                 SMAPackage rollbackPackageXml = new SMAPackage(
@@ -143,6 +143,7 @@ public class SMABuilder extends Builder
                 writeToConsole.println(sfConnection.getTestFailures());
                 writeToConsole.println(sfConnection.getCodeCoverageWarnings());
                 writeToConsole.println(sfConnection.getCodeCoverage());
+                parameterValues.add(new StringParameterValue("smaDeployResult", sfConnection.getComponentFailures() + sfConnection.getTestFailures()));
                 writeToConsole.println("[SMA] Deployment Failed");
             }
         }
@@ -150,6 +151,8 @@ public class SMABuilder extends Builder
         {
             e.printStackTrace(writeToConsole);
         }
+
+        build.addAction(new ParametersAction(parameterValues));
 
         return JOB_SUCCESS;
     }
