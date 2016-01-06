@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.jenkinsci.plugins.sma;
 
 import com.google.common.io.Files;
 import org.junit.After;

@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.jenkinsci.plugins.sma;
 
 import com.sforce.soap.metadata.Package;
 import com.sforce.soap.metadata.PackageTypeMembers;
@@ -15,7 +15,6 @@ import java.util.Map;
 /**
  * Wrapper for com.sforce.soap.metadata.Package.
  *
- * @author aesanch2
  */
 public class SMAPackage
 {

@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.jenkinsci.plugins.sma;
 
 import com.google.common.io.Files;
 import com.sforce.soap.metadata.CodeCoverageResult;
@@ -17,9 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by aesanch2 on 11/6/15.
- */
 public class SMAConnectionTest
 {
 

@@ -1,12 +1,10 @@
-package org.asu.sma;
+package org.jenkinsci.plugins.sma;
 
 import com.sforce.soap.metadata.DeployResult;
 import com.sforce.soap.metadata.TestLevel;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
@@ -20,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author aesanch2
+ * @author Anthony Sanchez <senninha09@gmail.com>
  */
 public class SMABuilder extends Builder
 {
@@ -55,9 +53,11 @@ public class SMABuilder extends Builder
         List<SMAMetadata> deployMetadata;
         List<SMAMetadata> deleteMetadata;
         DeployResult deploymentResult;
+        String smaDeployResult = "";
         boolean JOB_SUCCESS = false;
 
         PrintStream writeToConsole = listener.getLogger();
+        List<ParameterValue> parameterValues = new ArrayList<ParameterValue>();
 
         try
         {
@@ -100,38 +100,75 @@ public class SMABuilder extends Builder
 
             // Deploy to the server
             String[] specifiedTests = null;
-            if (TestLevel.valueOf(getTestLevel()).equals(TestLevel.RunSpecifiedTests))
+            TestLevel testLevel = TestLevel.valueOf(getTestLevel());
+
+            if (currentJob.getDeployAll())
+            {
+                testLevel = TestLevel.RunLocalTests;
+            }
+            else if (testLevel.equals(TestLevel.RunSpecifiedTests))
             {
                 specifiedTests = currentJob.getSpecifiedTests(getDescriptor().getRunTestRegex());
             }
+
             JOB_SUCCESS = sfConnection.deployToServer(
                     deploymentPackage,
                     getValidateEnabled(),
-                    TestLevel.valueOf(
-                            getTestLevel()
-                    ),
+                    testLevel,
                     specifiedTests
             );
 
             if (JOB_SUCCESS)
             {
-                writeToConsole.println(sfConnection.getCodeCoverageWarnings());
-                writeToConsole.println(sfConnection.getCodeCoverage());
-                writeToConsole.println("[SMA] Deployment Succeeded");
+                if (!testLevel.equals(TestLevel.NoTestRun))
+                {
+                    smaDeployResult = sfConnection.getCodeCoverage() + sfConnection.getCodeCoverageWarnings();
+                }
+
+                smaDeployResult = smaDeployResult + "\n[SMA] Deployment Succeeded";
+
+                if (!currentJob.getDeployAll())
+                {
+                    SMAPackage rollbackPackageXml = new SMAPackage(
+                            currentJob.getRollbackMetadata(),
+                            false
+                    );
+
+                    SMAPackage rollbackDestructiveXml = new SMAPackage(
+                            currentJob.getRollbackAdditions(),
+                            true
+                    );
+
+                    ByteArrayOutputStream rollbackPackage = SMAUtility.zipPackage(
+                            currentJob.getRollbackData(),
+                            rollbackPackageXml,
+                            rollbackDestructiveXml
+                    );
+
+                    SMAUtility.writeZip(rollbackPackage, currentJob.getRollbackLocation());
+                }
             }
             else
             {
-                writeToConsole.println(sfConnection.getComponentFailures());
-                writeToConsole.println(sfConnection.getTestFailures());
-                writeToConsole.println(sfConnection.getCodeCoverageWarnings());
-                writeToConsole.println(sfConnection.getCodeCoverage());
-                writeToConsole.println("[SMA] Deployment Failed");
+                smaDeployResult = sfConnection.getComponentFailures();
+
+                if (!TestLevel.valueOf(getTestLevel()).equals(TestLevel.NoTestRun))
+                {
+                    smaDeployResult = smaDeployResult + sfConnection.getTestFailures();
+                }
+
+                smaDeployResult = smaDeployResult + "\n[SMA] Deployment Failed";
             }
         }
         catch (Exception e)
         {
             e.printStackTrace(writeToConsole);
         }
+
+        parameterValues.add(new StringParameterValue("smaDeployResult", smaDeployResult));
+        build.addAction(new ParametersAction(parameterValues));
+
+        writeToConsole.println(smaDeployResult);
 
         return JOB_SUCCESS;
     }
@@ -176,7 +213,7 @@ public class SMABuilder extends Builder
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder>
     {
 
-        private String maxPoll = "20";
+        private String maxPoll = "200";
         private String pollWait = "30000";
         private String runTestRegex = ".*[T|t]est.*";
 

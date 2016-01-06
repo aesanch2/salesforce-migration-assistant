@@ -1,4 +1,4 @@
-package org.asu.sma;
+package org.jenkinsci.plugins.sma;
 
 import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 /**
  * Wrapper for git interactions using jGit.
  *
- * @author aesanch2
  */
 public class SMAGit
 {
@@ -74,6 +73,35 @@ public class SMAGit
         git = new Git(repository);
         this.prevCommit = prevCommit;
         this.curCommit = curCommit;
+        getDiffs();
+    }
+
+    /**
+     * Creates an SMAGit instance for a ghprb build
+     *
+     * @param pathToWorkspace
+     * @param curCommit
+     * @param targetBranch
+     * @throws Exception
+     */
+    public SMAGit(String pathToWorkspace,
+                  String curCommit,
+                  String targetBranch,
+                  String sourceBranch) throws Exception
+    {
+        this.pathToWorkspace = pathToWorkspace;
+        String pathToRepo = pathToWorkspace + "/.git";
+        File repoDir = new File(pathToRepo);
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        repository = builder.setGitDir(repoDir).readEnvironment().build();
+        git = new Git(repository);
+        this.curCommit = curCommit;
+
+        ObjectId branchId = repository.resolve(targetBranch);
+        RevCommit targetCommit = new RevWalk(repository).parseCommit(branchId);
+
+        this.prevCommit = targetCommit.getName();
+
         getDiffs();
     }
 
@@ -297,6 +325,21 @@ public class SMAGit
         }
 
         return false;
+    }
+
+    public Git getRepo()
+    {
+        return git;
+    }
+
+    public String getPrevCommit()
+    {
+        return prevCommit;
+    }
+
+    public String getCurCommit()
+    {
+        return curCommit;
     }
 
     /**
