@@ -1,4 +1,4 @@
-package org.senninha09.sma;
+package org.jenkinsci.plugins.sma;
 
 import com.sforce.soap.metadata.DeployResult;
 import com.sforce.soap.metadata.TestLevel;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author aesanch2
+ * @author Anthony Sanchez <senninha09@gmail.com>
  */
 public class SMABuilder extends Builder
 {
@@ -53,6 +53,7 @@ public class SMABuilder extends Builder
         List<SMAMetadata> deployMetadata;
         List<SMAMetadata> deleteMetadata;
         DeployResult deploymentResult;
+        String smaDeployResult = "";
         boolean JOB_SUCCESS = false;
 
         PrintStream writeToConsole = listener.getLogger();
@@ -99,52 +100,64 @@ public class SMABuilder extends Builder
 
             // Deploy to the server
             String[] specifiedTests = null;
-            if (TestLevel.valueOf(getTestLevel()).equals(TestLevel.RunSpecifiedTests))
+            TestLevel testLevel = TestLevel.valueOf(getTestLevel());
+
+            if (currentJob.getDeployAll())
+            {
+                testLevel = TestLevel.RunLocalTests;
+            }
+            else if (testLevel.equals(TestLevel.RunSpecifiedTests))
             {
                 specifiedTests = currentJob.getSpecifiedTests(getDescriptor().getRunTestRegex());
             }
+
             JOB_SUCCESS = sfConnection.deployToServer(
                     deploymentPackage,
                     getValidateEnabled(),
-                    TestLevel.valueOf(
-                            getTestLevel()
-                    ),
+                    testLevel,
                     specifiedTests
             );
 
             if (JOB_SUCCESS)
             {
-                writeToConsole.println(sfConnection.getCodeCoverageWarnings());
-                writeToConsole.println(sfConnection.getCodeCoverage());
-                parameterValues.add(new StringParameterValue("smaDeployResult", sfConnection.getCodeCoverage() + sfConnection.getCodeCoverageWarnings()));
-                writeToConsole.println("[SMA] Deployment Succeeded");
+                if (!testLevel.equals(TestLevel.NoTestRun))
+                {
+                    smaDeployResult = sfConnection.getCodeCoverage() + sfConnection.getCodeCoverageWarnings();
+                }
 
-                SMAPackage rollbackPackageXml = new SMAPackage(
-                        currentJob.getRollbackMetadata(),
-                        false
-                );
+                smaDeployResult = smaDeployResult + "\n[SMA] Deployment Succeeded";
 
-                SMAPackage rollbackDestructiveChange = new SMAPackage(
-                        currentJob.getRollbackAdditions(),
-                        true
-                );
+                if (!currentJob.getDeployAll())
+                {
+                    SMAPackage rollbackPackageXml = new SMAPackage(
+                            currentJob.getRollbackMetadata(),
+                            false
+                    );
 
-                ByteArrayOutputStream rollbackPackage = SMAUtility.zipPackage(
-                        currentJob.getRollbackData(),
-                        rollbackPackageXml,
-                        rollbackDestructiveChange
-                );
+                    SMAPackage rollbackDestructiveXml = new SMAPackage(
+                            currentJob.getRollbackAdditions(),
+                            true
+                    );
 
-                SMAUtility.writeZip(rollbackPackage, currentJob.getRollbackLocation());
+                    ByteArrayOutputStream rollbackPackage = SMAUtility.zipPackage(
+                            currentJob.getRollbackData(),
+                            rollbackPackageXml,
+                            rollbackDestructiveXml
+                    );
+
+                    SMAUtility.writeZip(rollbackPackage, currentJob.getRollbackLocation());
+                }
             }
             else
             {
-                writeToConsole.println(sfConnection.getComponentFailures());
-                writeToConsole.println(sfConnection.getTestFailures());
-                writeToConsole.println(sfConnection.getCodeCoverageWarnings());
-                writeToConsole.println(sfConnection.getCodeCoverage());
-                parameterValues.add(new StringParameterValue("smaDeployResult", sfConnection.getComponentFailures() + sfConnection.getTestFailures()));
-                writeToConsole.println("[SMA] Deployment Failed");
+                smaDeployResult = sfConnection.getComponentFailures();
+
+                if (!TestLevel.valueOf(getTestLevel()).equals(TestLevel.NoTestRun))
+                {
+                    smaDeployResult = smaDeployResult + sfConnection.getTestFailures();
+                }
+
+                smaDeployResult = smaDeployResult + "\n[SMA] Deployment Failed";
             }
         }
         catch (Exception e)
@@ -152,7 +165,10 @@ public class SMABuilder extends Builder
             e.printStackTrace(writeToConsole);
         }
 
+        parameterValues.add(new StringParameterValue("smaDeployResult", smaDeployResult));
         build.addAction(new ParametersAction(parameterValues));
+
+        writeToConsole.println(smaDeployResult);
 
         return JOB_SUCCESS;
     }
@@ -197,7 +213,7 @@ public class SMABuilder extends Builder
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder>
     {
 
-        private String maxPoll = "20";
+        private String maxPoll = "200";
         private String pollWait = "30000";
         private String runTestRegex = ".*[T|t]est.*";
 

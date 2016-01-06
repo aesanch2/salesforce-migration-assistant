@@ -1,4 +1,4 @@
-package org.senninha09.sma;
+package org.jenkinsci.plugins.sma;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +7,6 @@ import java.util.logging.Logger;
 /**
  * Creates an object representation of a Salesforce Metadata file.
  *
- * @author aesanch2
  */
 public class SMAMetadata implements Comparable<SMAMetadata>
 {

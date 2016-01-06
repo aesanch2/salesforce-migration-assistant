@@ -1,4 +1,4 @@
-package org.senninha09.sma;
+package org.jenkinsci.plugins.sma;
 
 import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 /**
  * Wrapper for git interactions using jGit.
  *
- * @author aesanch2
  */
 public class SMAGit
 {

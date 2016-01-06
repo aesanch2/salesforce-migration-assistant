@@ -1,4 +1,4 @@
-package org.senninha09.sma;
+package org.jenkinsci.plugins.sma;
 
 import com.sforce.soap.metadata.*;
 import com.sforce.soap.partner.Connector;
@@ -12,7 +12,6 @@ import java.text.DecimalFormat;
 /**
  * This class handles the API connection and actions against the Salesforce instance
  *
- * @author aesanch2
  */
 public class SMAConnection
 {
@@ -254,16 +253,9 @@ public class SMAConnection
         CodeCoverageWarning[] ccwarn = rtr.getCodeCoverageWarnings();
         if (ccwarn.length > 0);
         {
-            boolean generateHeader = true;
+            buf.append("[SMA] Code Coverage Warnings\n");
             for (CodeCoverageWarning ccw : ccwarn)
             {
-                // Weird handling for warnings
-                if (generateHeader)
-                {
-                    buf.append("[SMA] Code Coverage Warnings\n");
-                    generateHeader = false;
-                }
-
                 buf.append("Code coverage issue");
                 if (ccw.getName() != null)
                 {

@@ -1,4 +1,4 @@
-package org.senninha09.sma;
+package org.jenkinsci.plugins.sma;
 
 import hudson.EnvVars;
 
@@ -12,7 +12,6 @@ import java.util.logging.Logger;
 /**
  * Class that contains all of the configuration pertinent to the running job
  *
- * @author aesanch2
  */
 public class SMARunner
 {

@@ -1,8 +1,4 @@
-package org.senninha09.sma;
-
-/**
- * Created by aesanch2 on 12/4/15.
- */
+package org.jenkinsci.plugins.sma;
 
 import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Document;
@@ -18,14 +14,13 @@ import java.util.logging.Logger;
 /**
  * Class for the salesforceMetadata.xml document that contains Salesforce Metadata API information.
  *
- * @author aesanch2
  */
 public class SMAMetadataTypes
 {
     private static final Logger LOG = Logger.getLogger(SMAMetadataTypes.class.getName());
 
     private static final ClassLoader loader = SMAMetadataTypes.class.getClassLoader();
-    private static String pathToResource = loader.getResource("org/senninha09/sma/salesforceMetadata.xml").toString();
+    private static String pathToResource = loader.getResource("org/jenkinsci/plugins/sma/salesforceMetadata.xml").toString();
     private static Document doc;
     private static Boolean docAlive = false;
 
