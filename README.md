@@ -38,8 +38,9 @@ plan the contents of your repository accordingly.
 
 ### Installation
 * Install the plugin.
-* There are some global configuration items for the build.xml portion of SMA.
+* There are some global configuration items that should be set.
     * Enter a Java regular expression to filter your repository for all your unmanaged package unit tests.
+        * The default is ``.*[T|t]est.*``    
     * Enter the Poll Wait value.
     * Enter the Max Poll value.
         * The default values for Poll Wait and Max Poll will allow a build to run for up to 100 minutes.
