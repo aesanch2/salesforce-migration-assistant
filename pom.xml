@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.539</version>
+    <version>1.538</version>
   </parent>
 
   <artifactId>sma</artifactId>
@@ -39,7 +39,7 @@
 
     <developers>
         <developer>
-            <id>senninha09</id>
+            <id>aesanch2</id>
             <name>Anthony Sanchez</name>
             <email>senninha09@gmail.com</email>
         </developer>
