@@ -28,6 +28,42 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="sf-tooling-35" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.main:jenkins-war:war:1.638" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jenkins-ci.main:jenkins-core:1.638" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jenkins-ci.plugins.icon-shim:icon-set:1.0.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jenkins-ci.main:remoting:2.53" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jenkins-ci.main:cli:1.638" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.google.inject:guice:4.0-beta" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.kohsuke.stapler:stapler-groovy:1.237" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.kohsuke.stapler:stapler-jelly:1.237" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.kohsuke.stapler:stapler-jrebel:1.237" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.kohsuke.stapler:stapler:1.237" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: args4j:args4j:2.0.31" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jenkins-ci:bytecode-compatibility-transformer:1.7" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jvnet.localizer:localizer:1.23" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.commons:commons-compress:1.10" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: log4j:log4j:1.2.17" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: net.java.dev.jna:jna:4.2.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.kohsuke:akuma:1.10" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.main:jenkins-test-harness:1.638" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.main:jenkins-war:war-for-test:1.638" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.modules:windows-slave-installer:1.5.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci:test-annotations:1.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.htmlunit:htmlunit:2.18" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.apache.commons:commons-lang3:3.4" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.apache.httpcomponents:httpmime:4.5" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.htmlunit:htmlunit-core-js:2.17" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xerces:xercesImpl:2.11.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xml-apis:xml-apis:1.4.01" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.nekohtml:nekohtml:1.9.22" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.cssparser:cssparser:0.9.16" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.eclipse.jetty.websocket:websocket-client:9.2.12.v20150709" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.eclipse.jetty:jetty-util:9.2.12.v20150709" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.eclipse.jetty:jetty-io:9.2.12.v20150709" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.eclipse.jetty.websocket:websocket-common:9.2.12.v20150709" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.eclipse.jetty.websocket:websocket-api:9.2.12.v20150709" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.slf4j:log4j-over-slf4j:1.7.7" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.slf4j:jcl-over-slf4j:1.7.7" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.jgit:org.eclipse.jgit:3.5.1.201410131835-r" level="project" />
     <orderEntry type="library" name="Maven: com.jcraft:jsch:0.1.50" level="project" />
     <orderEntry type="library" name="Maven: com.googlecode.javaewah:JavaEWAH:0.7.9" level="project" />
