@@ -95,7 +95,11 @@ public class SMABuilder extends Builder
                     getSecurityToken(),
                     getServerType(),
                     getDescriptor().getPollWait(),
-                    getDescriptor().getMaxPoll()
+                    getDescriptor().getMaxPoll(),
+                    getDescriptor().getProxyServer(),
+                    getDescriptor().getProxyUser(),
+                    getDescriptor().getProxyPass(),
+                    getDescriptor().getProxyPort()
             );
 
             // Deploy to the server
@@ -216,6 +220,11 @@ public class SMABuilder extends Builder
         private String maxPoll = "200";
         private String pollWait = "30000";
         private String runTestRegex = ".*[T|t]est.*";
+        private String proxyServer;
+        private String proxyUser;
+        private String proxyPass;
+        private Integer proxyPort;
+
 
         public DescriptorImpl()
         {
@@ -248,6 +257,14 @@ public class SMABuilder extends Builder
             return runTestRegex;
         }
 
+        public String getProxyServer() { return proxyServer; }
+
+        public String getProxyUser() { return proxyUser; }
+
+        public String getProxyPass() { return proxyPass; }
+
+        public Integer getProxyPort() { return proxyPort; }
+
         public ListBoxModel doFillServerTypeItems()
         {
             return new ListBoxModel(
@@ -270,6 +287,10 @@ public class SMABuilder extends Builder
         {
             maxPoll = formData.getString("maxPoll");
             pollWait = formData.getString("pollWait");
+            proxyServer = formData.getString("proxyServer");
+            proxyUser = formData.getString("proxyUser");
+            proxyPass = formData.getString("proxyPass");
+            proxyPort = formData.getInt("proxyPort");
 
             save();
             return false;

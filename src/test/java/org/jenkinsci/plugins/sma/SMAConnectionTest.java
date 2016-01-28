@@ -19,12 +19,16 @@ import java.util.Map;
 
 public class SMAConnectionTest
 {
-
+    //TODO: need to figure out a way to mock this configuration
     SMAConnection sfConnection;
     String username = "";
-    String password = "";
+    String password = "!";
     String securityToken = "";
-    String server = "https://test.salesforce.com";
+    String server = "";
+    String proxyServer = "";
+    String proxyUser = "";
+    String proxyPass = "";
+    Integer proxyPort;
     File localPath;
     ByteArrayOutputStream boas;
 
@@ -81,7 +85,11 @@ public class SMAConnectionTest
                     securityToken,
                     server,
                     "30000",
-                    "200"
+                    "200",
+                    proxyServer,
+                    proxyUser,
+                    proxyPass,
+                    proxyPort
             );
 
             success = sfConnection.deployToServer(
@@ -110,7 +118,11 @@ public class SMAConnectionTest
                     securityToken,
                     server,
                     "30000",
-                    "200"
+                    "200",
+                    proxyServer,
+                    proxyUser,
+                    proxyPass,
+                    proxyPort
             );
 
             StringBuilder sb = new StringBuilder();

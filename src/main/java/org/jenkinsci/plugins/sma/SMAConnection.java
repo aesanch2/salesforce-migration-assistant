@@ -38,6 +38,10 @@ public class SMAConnection
      * @param server
      * @param pollWaitString
      * @param maxPollString
+     * @param proxyServer
+     * @param proxyUser
+     * @param proxyPort
+     * @param proxyPass
      * @throws Exception
      */
     public SMAConnection(String username,
@@ -45,7 +49,11 @@ public class SMAConnection
                          String securityToken,
                          String server,
                          String pollWaitString,
-                         String maxPollString) throws Exception
+                         String maxPollString,
+                         String proxyServer,
+                         String proxyUser,
+                         String proxyPass,
+                         Integer proxyPort) throws Exception
     {
         API_VERSION = Double.valueOf(SMAMetadataTypes.getAPIVersion());
         this.pollWaitString = pollWaitString;
@@ -59,6 +67,17 @@ public class SMAConnection
         initConfig.setServiceEndpoint(endpoint);
         initConfig.setManualLogin(true);
 
+        //Proxy support
+        if (!proxyServer.isEmpty()) {
+            initConfig.setProxy(proxyServer, proxyPort);
+            if (!proxyPass.isEmpty()) {
+                initConfig.setProxyUsername(proxyUser);
+                initConfig.setProxyPassword(proxyPass);
+            }
+        }
+
+
+
         partnerConnection = Connector.newConnection(initConfig);
 
         LoginResult loginResult = new LoginResult();
@@ -66,6 +85,9 @@ public class SMAConnection
         loginResult = partnerConnection.login(initConfig.getUsername(), initConfig.getPassword());
         metadataConfig.setServiceEndpoint(loginResult.getMetadataServerUrl());
         metadataConfig.setSessionId(loginResult.getSessionId());
+        metadataConfig.setProxy(initConfig.getProxy());
+        metadataConfig.setProxyUsername(initConfig.getProxyUsername());
+        metadataConfig.setProxyPassword(initConfig.getProxyPassword());
 
         metadataConnection = new MetadataConnection(metadataConfig);
     }
