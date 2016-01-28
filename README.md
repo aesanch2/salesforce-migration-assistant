@@ -44,6 +44,8 @@ plan the contents of your repository accordingly.
     * Enter the Poll Wait value.
     * Enter the Max Poll value.
         * The default values for Poll Wait and Max Poll will allow a build to run for up to 100 minutes.
+    * If you're behind a proxy, you can configure the settings for the proxy server, port, and authentication details
+    under `Advanced...`
 
 ### Project Configuration
 * Create a new job.
@@ -66,7 +68,10 @@ in your repository.
 
 ### Changelog
 
-## -> 2.1
+#### -> 2.2
+* Add support for proxy configurations
+
+#### -> 2.1
 * Add support for GitHub Pull Request Builder plugin.
 * Add rollback zip generation support.
   * Was removed in previous release.
