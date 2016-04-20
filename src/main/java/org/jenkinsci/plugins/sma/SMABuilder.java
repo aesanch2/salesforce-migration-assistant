@@ -106,11 +106,7 @@ public class SMABuilder extends Builder
             String[] specifiedTests = null;
             TestLevel testLevel = TestLevel.valueOf(getTestLevel());
 
-            if (currentJob.getDeployAll())
-            {
-                testLevel = TestLevel.RunLocalTests;
-            }
-            else if (testLevel.equals(TestLevel.RunSpecifiedTests))
+            if (testLevel.equals(TestLevel.RunSpecifiedTests))
             {
                 specifiedTests = currentJob.getSpecifiedTests(getDescriptor().getRunTestRegex());
             }

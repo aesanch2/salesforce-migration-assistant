@@ -8,6 +8,8 @@ import com.sforce.ws.ConnectorConfig;
 
 import java.io.ByteArrayOutputStream;
 import java.text.DecimalFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class handles the API connection and actions against the Salesforce instance
@@ -15,6 +17,8 @@ import java.text.DecimalFormat;
  */
 public class SMAConnection
 {
+    private static final Logger LOG = Logger.getLogger(SMAConnection.class.getName());
+
     private final ConnectorConfig initConfig = new ConnectorConfig();
     private final ConnectorConfig metadataConfig = new ConnectorConfig();
     private final ConnectorConfig toolingConfig = new ConnectorConfig();
@@ -113,6 +117,9 @@ public class SMAConnection
         deployOptions.setSinglePackage(true);
         deployOptions.setCheckOnly(validateOnly);
         deployOptions.setTestLevel(testLevel);
+
+        LOG.log(Level.INFO, "Test Level is set to " + testLevel);
+
         if (testLevel.equals(TestLevel.RunSpecifiedTests))
         {
             deployOptions.setRunTests(specifiedTests);
