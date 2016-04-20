@@ -25,6 +25,7 @@ import java.util.logging.Logger;
  */
 public class SMAGit
 {
+    private final String SOURCEDIR = "src/";
 
     private Git git;
     private Repository repository;
@@ -120,7 +121,7 @@ public class SMAGit
             if (diff.getChangeType().toString().equals("ADD"))
             {
                 String item = SMAUtility.checkMeta(diff.getNewPath());
-                if (!additions.containsKey(item))
+                if (!additions.containsKey(item) && item.contains(SOURCEDIR))
                 {
                     additions.put(diff.getNewPath(), getBlob(diff.getNewPath(), curCommit));
                 }
@@ -144,7 +145,7 @@ public class SMAGit
             if (diff.getChangeType().toString().equals("DELETE"))
             {
                 String item = SMAUtility.checkMeta(diff.getOldPath());
-                if (!deletions.containsKey(item))
+                if (!deletions.containsKey(item) && item.contains(SOURCEDIR))
                 {
                     deletions.put(diff.getOldPath(), getBlob(diff.getOldPath(), prevCommit));
                 }
@@ -169,7 +170,7 @@ public class SMAGit
             if (diff.getChangeType().toString().equals("MODIFY"))
             {
                 String item = SMAUtility.checkMeta(diff.getNewPath());
-                if (!modifiedMetadata.containsKey(item))
+                if (!modifiedMetadata.containsKey(item) && item.contains(SOURCEDIR))
                 {
                     modifiedMetadata.put(diff.getNewPath(), getBlob(diff.getNewPath(), curCommit));
                 }
@@ -192,7 +193,7 @@ public class SMAGit
             if (diff.getChangeType().toString().equals("MODIFY"))
             {
                 String item = SMAUtility.checkMeta(diff.getOldPath());
-                if (!originalMetadata.containsKey(item))
+                if (!originalMetadata.containsKey(item) && item.contains(SOURCEDIR))
                 {
                     originalMetadata.put(diff.getOldPath(), getBlob(diff.getOldPath(), prevCommit));
                 }
