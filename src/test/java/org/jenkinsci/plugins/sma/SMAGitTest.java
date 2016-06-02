@@ -165,13 +165,13 @@ public class SMAGitTest
         expectedContents.put("src/triggers/addThis.trigger", contents.getBytes());
         expectedContents.put("src/triggers/addThis.trigger-meta.xml", contents.getBytes());
 
-        String oldBranch = "oldBranch";
+        String oldBranch = "refs/remotes/origin/oldBranch";
         CreateBranchCommand cbc = new Git(repository).branchCreate();
         cbc.setName(oldBranch);
         cbc.setStartPoint(oldSha);
         cbc.call();
 
-        git = new SMAGit(gitDir, newSha, oldBranch, "master");
+        git = new SMAGit(gitDir, newSha, "oldBranch", "master");
 
         Map<String, byte[]> allMetadata = git.getAllMetadata();
 

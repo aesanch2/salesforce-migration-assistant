@@ -41,7 +41,7 @@ public class SMARunner
         // Get envvars to initialize SMAGit
         Boolean shaOverride = false;
         currentCommit = jobVariables.get("GIT_COMMIT");
-        Boolean ghprbJob = Boolean.valueOf(jobVariables.get("BUILD_CAUSE_GHPRBCAUSE"));
+        Boolean ghprbJob = (jobVariables.get("ghprbSourceBranch") != null);
         String pathToWorkspace = jobVariables.get("WORKSPACE");
         String jenkinsHome = jobVariables.get("JENKINS_HOME");
         String jobName = jobVariables.get("JOB_NAME");
@@ -74,8 +74,9 @@ public class SMARunner
         // Configure using ghprb logic, unless there is an overridden previous commit
         if (ghprbJob && !shaOverride)
         {
+            deployAll = false;
             String ghprbTargetBranch = jobVariables.get("ghprbTargetBranch");
-            String ghprbSourceBranch = jobVariables.get("ghprbSourceBranch");
+            String ghprbSourceBranch = jobVariables.get("sha1");
             git = new SMAGit(pathToWorkspace, currentCommit, ghprbTargetBranch, ghprbSourceBranch);
         }
         // Configure for all the metadata
