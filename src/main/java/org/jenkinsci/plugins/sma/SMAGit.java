@@ -82,6 +82,7 @@ public class SMAGit
      * @param pathToWorkspace
      * @param curCommit
      * @param targetBranch
+     * @param sourceBranch
      * @throws Exception
      */
     public SMAGit(String pathToWorkspace,
@@ -97,7 +98,7 @@ public class SMAGit
         git = new Git(repository);
         this.curCommit = curCommit;
 
-        ObjectId branchId = repository.resolve(targetBranch);
+        ObjectId branchId = repository.resolve("refs/remotes/origin/" + targetBranch);
         RevCommit targetCommit = new RevWalk(repository).parseCommit(branchId);
 
         this.prevCommit = targetCommit.getName();

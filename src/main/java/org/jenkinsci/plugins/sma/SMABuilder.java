@@ -50,9 +50,6 @@ public class SMABuilder extends Builder
                            Launcher launcher,
                            BuildListener listener)
     {
-        List<SMAMetadata> deployMetadata;
-        List<SMAMetadata> deleteMetadata;
-        DeployResult deploymentResult;
         String smaDeployResult = "";
         boolean JOB_SUCCESS = false;
 
@@ -126,7 +123,7 @@ public class SMABuilder extends Builder
             {
                 if (!testLevel.equals(TestLevel.NoTestRun))
                 {
-                    smaDeployResult = sfConnection.getCodeCoverage() + sfConnection.getCodeCoverageWarnings();
+                    smaDeployResult = sfConnection.getCodeCoverage();
                 }
 
                 smaDeployResult = smaDeployResult + "\n[SMA] Deployment Succeeded";
@@ -159,6 +156,7 @@ public class SMABuilder extends Builder
                 if (!TestLevel.valueOf(getTestLevel()).equals(TestLevel.NoTestRun))
                 {
                     smaDeployResult = smaDeployResult + sfConnection.getTestFailures();
+                    smaDeployResult = smaDeployResult + sfConnection.getCodeCoverageWarnings();
                 }
 
                 smaDeployResult = smaDeployResult + "\n[SMA] Deployment Failed";

@@ -112,10 +112,22 @@ public class SMAConnection
         deployOptions.setRollbackOnError(true);
         deployOptions.setSinglePackage(true);
         deployOptions.setCheckOnly(validateOnly);
-        deployOptions.setTestLevel(testLevel);
+
         if (testLevel.equals(TestLevel.RunSpecifiedTests))
         {
-            deployOptions.setRunTests(specifiedTests);
+            if (specifiedTests.length > 0)
+            {
+                deployOptions.setTestLevel(testLevel);
+                deployOptions.setRunTests(specifiedTests);
+            }
+            else
+            {
+                deployOptions.setTestLevel(TestLevel.NoTestRun);
+            }
+        }
+        else
+        {
+            deployOptions.setTestLevel(testLevel);
         }
 
         AsyncResult asyncResult = metadataConnection.deploy(bytes.toByteArray(), deployOptions);
@@ -166,7 +178,7 @@ public class SMAConnection
     {
         RunTestsResult rtr = deployDetails.getRunTestResult();
         StringBuilder buf = new StringBuilder();
-        if (rtr.getFailures() != null)
+        if (rtr.getFailures().length > 0)
         {
             buf.append("[SMA] Test Failures\n");
             for (RunTestFailure failure : rtr.getFailures())
