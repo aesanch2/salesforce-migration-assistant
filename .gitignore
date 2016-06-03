@@ -1,4 +1,4 @@
-apmg.iml
+*.iml
 .idea/*
 work/*
 target/*
