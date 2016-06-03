@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.sma;
 
-import com.sforce.soap.metadata.DeployResult;
 import com.sforce.soap.metadata.TestLevel;
 import hudson.Extension;
 import hudson.Launcher;
@@ -28,6 +27,7 @@ public class SMABuilder extends Builder
     private String securityToken;
     private String serverType;
     private String testLevel;
+    private String prTargetBranch;
 
     @DataBoundConstructor
     public SMABuilder(Boolean validateEnabled,
@@ -35,7 +35,8 @@ public class SMABuilder extends Builder
                       String password,
                       String securityToken,
                       String serverType,
-                      String testLevel)
+                      String testLevel,
+                      String prTargetBranch)
     {
         this.username = username;
         this.password = password;
@@ -43,6 +44,7 @@ public class SMABuilder extends Builder
         this.serverType = serverType;
         this.validateEnabled = validateEnabled;
         this.testLevel = testLevel;
+        this.prTargetBranch = prTargetBranch;
     }
 
     @Override
@@ -59,7 +61,7 @@ public class SMABuilder extends Builder
         try
         {
             // Initialize the runner for this job
-            SMARunner currentJob = new SMARunner(build.getEnvironment(listener));
+            SMARunner currentJob = new SMARunner(build.getEnvironment(listener), prTargetBranch);
 
             // Build the package and destructiveChanges manifests
             SMAPackage packageXml = new SMAPackage(currentJob.getPackageMembers(), false);
