@@ -157,7 +157,7 @@ public class SMAGitTest
      * @throws Exception
      */
     @Test
-    public void testGhprb() throws Exception
+    public void testPullRequest() throws Exception
     {
         Map<String, byte[]> expectedContents = new HashMap<String, byte[]>();
         expectedContents.put("src/pages/modifyThis.page", contents.getBytes());

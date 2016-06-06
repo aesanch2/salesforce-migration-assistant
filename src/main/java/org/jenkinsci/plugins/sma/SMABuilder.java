@@ -7,6 +7,7 @@ import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -159,8 +160,7 @@ public class SMABuilder extends Builder
 
                 smaDeployResult = smaDeployResult + "\n[SMA] Deployment Failed";
             }
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             e.printStackTrace(writeToConsole);
         }
@@ -201,6 +201,11 @@ public class SMABuilder extends Builder
     public String getTestLevel()
     {
         return testLevel;
+    }
+
+    public String getPrTargetBranch()
+    {
+        return prTargetBranch;
     }
 
     @Override
