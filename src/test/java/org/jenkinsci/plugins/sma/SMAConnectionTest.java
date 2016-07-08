@@ -22,7 +22,7 @@ public class SMAConnectionTest
     //TODO: need to figure out a way to mock this configuration
     SMAConnection sfConnection;
     String username = "";
-    String password = "!";
+    String password = "";
     String securityToken = "";
     String server = "";
     String proxyServer = "";

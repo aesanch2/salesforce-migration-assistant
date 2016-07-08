@@ -25,73 +25,31 @@ import java.util.logging.Logger;
  */
 public class SMAGit
 {
+    public enum Mode { STD, INI, PRB }
+
     private final String SOURCEDIR = "src/";
 
     private Git git;
     private Repository repository;
     private List<DiffEntry> diffs;
     private String prevCommit, curCommit;
-    private String pathToWorkspace;
 
     private static final Logger LOG = Logger.getLogger(SMAGit.class.getName());
 
     /**
-     * Creates an SMAGit instance for the initial commit and/or initial build.
-     *
-     * @param pathToWorkspace The path to the git repository.
-     * @param curCommit       The current commit.
-     * @throws Exception
-     */
-    public SMAGit(String pathToWorkspace,
-                  String curCommit) throws Exception
-    {
-        this.pathToWorkspace = pathToWorkspace;
-        String pathToRepo = pathToWorkspace + "/.git";
-        File repoDir = new File(pathToRepo);
-        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        repository = builder.setGitDir(repoDir).readEnvironment().build();
-        git = new Git(repository);
-        this.curCommit = curCommit;
-    }
-
-    /**
-     * Creates an SMAGit instance for all other builds.
-     *
-     * @param pathToWorkspace The path to the git repository.
-     * @param curCommit       The current commit.
-     * @param prevCommit      The previous commit.
-     * @throws Exception
-     */
-    public SMAGit(String pathToWorkspace,
-                  String curCommit,
-                  String prevCommit) throws Exception
-    {
-        this.pathToWorkspace = pathToWorkspace;
-        String pathToRepo = pathToWorkspace + "/.git";
-        File repoDir = new File(pathToRepo);
-        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        repository = builder.setGitDir(repoDir).readEnvironment().build();
-        git = new Git(repository);
-        this.prevCommit = prevCommit;
-        this.curCommit = curCommit;
-        getDiffs();
-    }
-
-    /**
-     * Creates an SMAGit instance for a ghprb build
+     * Creates an SMAGit instance
      *
      * @param pathToWorkspace
      * @param curCommit
-     * @param targetBranch
-     * @param sourceBranch
+     * @param diffAgainst
+     * @param smaMode
      * @throws Exception
      */
     public SMAGit(String pathToWorkspace,
                   String curCommit,
-                  String targetBranch,
-                  String sourceBranch) throws Exception
+                  String diffAgainst,
+                  Mode smaMode) throws Exception
     {
-        this.pathToWorkspace = pathToWorkspace;
         String pathToRepo = pathToWorkspace + "/.git";
         File repoDir = new File(pathToRepo);
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -99,12 +57,22 @@ public class SMAGit
         git = new Git(repository);
         this.curCommit = curCommit;
 
-        ObjectId branchId = repository.resolve("refs/remotes/origin/" + targetBranch);
-        RevCommit targetCommit = new RevWalk(repository).parseCommit(branchId);
+        if (smaMode == Mode.PRB)
+        {
+            ObjectId branchId = repository.resolve("refs/remotes/origin/" + diffAgainst);
+            RevCommit targetCommit = new RevWalk(repository).parseCommit(branchId);
 
-        this.prevCommit = targetCommit.getName();
+            this.prevCommit = targetCommit.getName();
+        }
+        else if (smaMode == Mode.STD)
+        {
+            this.prevCommit = diffAgainst;
+        }
 
-        getDiffs();
+        if (smaMode != Mode.INI)
+        {
+            getDiffs();
+        }
     }
 
     /**
@@ -267,8 +235,11 @@ public class SMAGit
             else
             {
                 String member = treeWalk.getPathString();
-                byte[] data = getBlob(member, curCommit);
-                contents.put(member, data);
+                if (member.contains(SOURCEDIR))
+                {
+                    byte[] data = getBlob(member, curCommit);
+                    contents.put(member, data);
+                }
             }
         }
 
