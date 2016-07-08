@@ -1,4 +1,5 @@
 *.iml
-.idea/*
-work/*
-target/*
+.idea/
+work/
+target/
+wiki/
