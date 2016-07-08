@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.sma;
 
-import com.sforce.soap.metadata.DeployResult;
 import com.sforce.soap.metadata.TestLevel;
 import hudson.Extension;
 import hudson.Launcher;
@@ -8,6 +7,7 @@ import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -28,6 +28,7 @@ public class SMABuilder extends Builder
     private String securityToken;
     private String serverType;
     private String testLevel;
+    private String prTargetBranch;
 
     @DataBoundConstructor
     public SMABuilder(Boolean validateEnabled,
@@ -35,7 +36,8 @@ public class SMABuilder extends Builder
                       String password,
                       String securityToken,
                       String serverType,
-                      String testLevel)
+                      String testLevel,
+                      String prTargetBranch)
     {
         this.username = username;
         this.password = password;
@@ -43,6 +45,7 @@ public class SMABuilder extends Builder
         this.serverType = serverType;
         this.validateEnabled = validateEnabled;
         this.testLevel = testLevel;
+        this.prTargetBranch = prTargetBranch;
     }
 
     @Override
@@ -59,7 +62,7 @@ public class SMABuilder extends Builder
         try
         {
             // Initialize the runner for this job
-            SMARunner currentJob = new SMARunner(build.getEnvironment(listener));
+            SMARunner currentJob = new SMARunner(build.getEnvironment(listener), prTargetBranch);
 
             // Build the package and destructiveChanges manifests
             SMAPackage packageXml = new SMAPackage(currentJob.getPackageMembers(), false);
@@ -157,8 +160,7 @@ public class SMABuilder extends Builder
 
                 smaDeployResult = smaDeployResult + "\n[SMA] Deployment Failed";
             }
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             e.printStackTrace(writeToConsole);
         }
@@ -199,6 +201,11 @@ public class SMABuilder extends Builder
     public String getTestLevel()
     {
         return testLevel;
+    }
+
+    public String getPrTargetBranch()
+    {
+        return prTargetBranch;
     }
 
     @Override

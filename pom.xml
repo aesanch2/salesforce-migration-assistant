@@ -131,10 +131,5 @@
             <artifactId>force-metadata-api</artifactId>
             <version>35.0.0</version>
         </dependency>
-        <dependency>
-            <groupId>com.force.api</groupId>
-            <artifactId>force-apex-api</artifactId>
-            <version>35.0.0</version>
-        </dependency>
     </dependencies>
 </project>

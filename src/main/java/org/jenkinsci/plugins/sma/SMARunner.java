@@ -15,7 +15,6 @@ import java.util.logging.Logger;
  */
 public class SMARunner
 {
-
     private static final Logger LOG = Logger.getLogger(SMARunner.class.getName());
 
     private Boolean deployAll = false;
@@ -23,8 +22,6 @@ public class SMARunner
     private String previousCommit;
     private String rollbackLocation;
     private SMAGit git;
-    private SMAPackage manifest;
-    private File rollbackPath;
     private List<SMAMetadata> deployMetadata = new ArrayList<SMAMetadata>();
     private List<SMAMetadata> deleteMetadata = new ArrayList<SMAMetadata>();
     private List<SMAMetadata> rollbackMetadata = new ArrayList<SMAMetadata>();
@@ -36,14 +33,14 @@ public class SMARunner
      * @param jobVariables
      * @throws Exception
      */
-    public SMARunner(EnvVars jobVariables) throws Exception
+    public SMARunner(EnvVars jobVariables, String prTargetBranch) throws Exception
     {
         // Get envvars to initialize SMAGit
         Boolean shaOverride = false;
         currentCommit = jobVariables.get("GIT_COMMIT");
         Boolean ghprbJob = (jobVariables.get("ghprbSourceBranch") != null);
+        String buildCause = jobVariables.get("BUILD_CAUSE");
         String pathToWorkspace = jobVariables.get("WORKSPACE");
-        String jenkinsHome = jobVariables.get("JENKINS_HOME");
         String jobName = jobVariables.get("JOB_NAME");
         String buildNumber = jobVariables.get("BUILD_NUMBER");
 
@@ -70,24 +67,21 @@ public class SMARunner
             }
         }
 
-
-        // Configure using ghprb logic, unless there is an overridden previous commit
-        if (ghprbJob && !shaOverride)
+        // Configure using pull request logic
+        if (ghprbJob || buildCause.equals("GITHUBPULLREQUESTCAUSE") && !shaOverride)
         {
             deployAll = false;
-            String ghprbTargetBranch = jobVariables.get("ghprbTargetBranch");
-            String ghprbSourceBranch = jobVariables.get("sha1");
-            git = new SMAGit(pathToWorkspace, currentCommit, ghprbTargetBranch, ghprbSourceBranch);
+            git = new SMAGit(pathToWorkspace, currentCommit, prTargetBranch, SMAGit.Mode.PRB);
         }
         // Configure for all the metadata
         else if (deployAll)
         {
-            git = new SMAGit(pathToWorkspace, currentCommit);
+            git = new SMAGit(pathToWorkspace, currentCommit, null, SMAGit.Mode.INI);
         }
         // Configure using the previous successful commit for this job
         else
         {
-            git = new SMAGit(pathToWorkspace, currentCommit, previousCommit);
+            git = new SMAGit(pathToWorkspace, currentCommit, previousCommit, SMAGit.Mode.STD);
         }
 
         rollbackLocation = pathToWorkspace + "/sma/rollback" + jobName + buildNumber + ".zip";
@@ -129,7 +123,7 @@ public class SMARunner
     /**
      * Returns the SMAMetadata that is going to be deleted in this job
      *
-     * @return
+     * @return deleteMetadata
      * @throws Exception
      */
     public List<SMAMetadata> getDestructionMembers() throws Exception
@@ -169,7 +163,7 @@ public class SMARunner
     /**
      * Returns a map with the file name mapped to the byte contents of the metadata
      *
-     * @return
+     * @return deploymentData
      * @throws Exception
      */
     public Map<String, byte[]> getDeploymentData() throws Exception
