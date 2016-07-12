@@ -77,13 +77,8 @@
     <dependencies>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>matrix-project</artifactId>
-            <version>1.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>ghprb</artifactId>
-            <version>1.31.4</version>
+            <artifactId>git</artifactId>
+            <version>2.3.1</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
@@ -95,11 +90,6 @@
             <artifactId>junit</artifactId>
             <version>4.11</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>git</artifactId>
-            <version>2.3.1</version>
         </dependency>
         <dependency>
             <groupId>com.sun.xml.ws</groupId>
