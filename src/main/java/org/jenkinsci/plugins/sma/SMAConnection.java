@@ -21,7 +21,6 @@ public class SMAConnection
 
     private final ConnectorConfig initConfig = new ConnectorConfig();
     private final ConnectorConfig metadataConfig = new ConnectorConfig();
-    private final ConnectorConfig toolingConfig = new ConnectorConfig();
 
     private final MetadataConnection metadataConnection;
     private final PartnerConnection partnerConnection;
@@ -59,6 +58,8 @@ public class SMAConnection
                          String proxyPass,
                          Integer proxyPort) throws Exception
     {
+        System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+
         API_VERSION = Double.valueOf(SMAMetadataTypes.getAPIVersion());
         this.pollWaitString = pollWaitString;
         this.maxPollString = maxPollString;
@@ -103,13 +104,15 @@ public class SMAConnection
      * @param validateOnly
      * @param testLevel
      * @param specifiedTests
+     * @param containsApex
      * @return
      * @throws Exception
      */
     public boolean deployToServer(ByteArrayOutputStream bytes,
-                                  boolean validateOnly,
                                   TestLevel testLevel,
-                                  String[] specifiedTests) throws Exception
+                                  String[] specifiedTests,
+                                  boolean validateOnly,
+                                  boolean containsApex) throws Exception
     {
         DeployOptions deployOptions = new DeployOptions();
         deployOptions.setPerformRetrieve(false);
@@ -117,7 +120,7 @@ public class SMAConnection
         deployOptions.setSinglePackage(true);
         deployOptions.setCheckOnly(validateOnly);
 
-        // We need to make sure there are actually tests supplied for RunSpecifiedTests
+        // We need to make sure there are actually tests supplied for RunSpecifiedTests...
         if (testLevel.equals(TestLevel.RunSpecifiedTests))
         {
             if (specifiedTests.length > 0)
@@ -130,7 +133,8 @@ public class SMAConnection
                 deployOptions.setTestLevel(TestLevel.NoTestRun);
             }
         }
-        else
+        // And that we should even set a TestLevel
+        else if (containsApex)
         {
             deployOptions.setTestLevel(testLevel);
         }

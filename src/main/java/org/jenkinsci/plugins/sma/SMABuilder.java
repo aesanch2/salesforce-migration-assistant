@@ -113,9 +113,10 @@ public class SMABuilder extends Builder
 
             JOB_SUCCESS = sfConnection.deployToServer(
                     deploymentPackage,
-                    getValidateEnabled(),
                     testLevel,
-                    specifiedTests
+                    specifiedTests,
+                    getValidateEnabled(),
+                    packageXml.containsApex()
             );
 
             if (JOB_SUCCESS)

@@ -85,6 +85,26 @@ public class SMAPackage
     }
 
     /**
+     * Returns whether or not this package contains Apex components
+     *
+     * @return containsApex
+     */
+    public boolean containsApex() {
+        boolean containsApex = false;
+
+        for (SMAMetadata thisMetadata : contents) {
+            if (thisMetadata.getMetadataType().equals("ApexClass")
+                    || thisMetadata.getMetadataType().equals("ApexTrigger"))
+            {
+                containsApex = true;
+                break;
+            }
+        }
+
+        return containsApex;
+    }
+
+    /**
      * Sorts the metadata into types and members for the manifest
      *
      * @return
