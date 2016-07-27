@@ -1,14 +1,11 @@
 package org.jenkinsci.plugins.sma;
 
-import com.sforce.soap.metadata.TestLevel;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -16,6 +13,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.sforce.soap.metadata.TestLevel;
+import net.sf.json.JSONObject;
 
 /**
  * @author Anthony Sanchez <senninha09@gmail.com>
@@ -291,11 +291,10 @@ public class SMABuilder extends Builder
             proxyServer = formData.getString("proxyServer");
             proxyUser = formData.getString("proxyUser");
             proxyPass = formData.getString("proxyPass");
-            proxyPort = formData.getInt("proxyPort");
+            proxyPort = formData.optInt("proxyPort");
 
             save();
             return false;
         }
     }
 }
-
