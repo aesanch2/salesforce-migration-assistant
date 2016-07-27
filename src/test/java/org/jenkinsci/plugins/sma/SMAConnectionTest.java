@@ -19,7 +19,7 @@ import java.util.Map;
 
 public class SMAConnectionTest
 {
-    //TODO: need to figure out a way to mock this configuration
+    //TODO: need to mock this configuration
     SMAConnection sfConnection;
     String username = "";
     String password = "";
@@ -94,9 +94,10 @@ public class SMAConnectionTest
 
             success = sfConnection.deployToServer(
                     boas,
-                    true,
                     TestLevel.NoTestRun,
-                    null
+                    null,
+                    true,
+                    true
             );
         }
 
