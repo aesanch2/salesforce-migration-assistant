@@ -203,7 +203,7 @@ public class SMAGit
             throw new IllegalStateException("Did not find expected file '" + repoItem + "'");
         }
 
-        reader.release();
+        reader.close();
 
         return data;
     }
@@ -243,7 +243,7 @@ public class SMAGit
             }
         }
 
-        reader.release();
+        reader.close();
 
         return contents;
     }

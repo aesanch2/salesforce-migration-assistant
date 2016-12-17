@@ -68,11 +68,12 @@ public class SMAGitTest
         RevCommit firstCommit = new Git(repository).commit().setMessage("Add deleteThis and modifyThis").call();
         oldSha = firstCommit.getName();
 
-
         //Delete the deletion file, modify the modification file, and add the addition file
         new Git(repository).rm().addFilepattern("src/classes/deleteThis.cls").call();
         new Git(repository).rm().addFilepattern("src/classes/deleteThis.cls-meta.xml").call();
-        modification.setExecutable(true);
+        PrintWriter out = new PrintWriter(modification.getPath());
+        out.println("Modified the page");
+        out.close();
         addition = createFile("addThis.trigger", triggersPath);
         addMeta = createFile("addThis.trigger-meta.xml", triggersPath);
         new Git(repository).add().addFilepattern("src/pages/modifyThis.page").call();
