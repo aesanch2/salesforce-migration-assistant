@@ -222,10 +222,10 @@ public class SMABuilder extends Builder
         private String maxPoll = "200";
         private String pollWait = "30000";
         private String runTestRegex = ".*[T|t]est.*";
-        private String proxyServer;
-        private String proxyUser;
-        private String proxyPass;
-        private Integer proxyPort;
+        private String proxyServer = "";
+        private String proxyUser = "";
+        private String proxyPass = "";
+        private Integer proxyPort = 0;
 
 
         public DescriptorImpl()

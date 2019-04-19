@@ -31,6 +31,7 @@ public class SMARunner
      * Wrapper for coordinating the configuration of the running job
      *
      * @param jobVariables
+     * @param prTargetBranch
      * @throws Exception
      */
     public SMARunner(EnvVars jobVariables, String prTargetBranch) throws Exception
@@ -38,8 +39,6 @@ public class SMARunner
         // Get envvars to initialize SMAGit
         Boolean shaOverride = false;
         currentCommit = jobVariables.get("GIT_COMMIT");
-        Boolean ghprbJob = (jobVariables.get("ghprbSourceBranch") != null);
-        String buildCause = jobVariables.get("BUILD_CAUSE");
         String pathToWorkspace = jobVariables.get("WORKSPACE");
         String jobName = jobVariables.get("JOB_NAME");
         String buildNumber = jobVariables.get("BUILD_NUMBER");
@@ -68,7 +67,7 @@ public class SMARunner
         }
 
         // Configure using pull request logic
-        if (ghprbJob || buildCause.equals("GITHUBPULLREQUESTCAUSE") && !shaOverride)
+        if (!prTargetBranch.isEmpty() && !shaOverride)
         {
             deployAll = false;
             git = new SMAGit(pathToWorkspace, currentCommit, prTargetBranch, SMAGit.Mode.PRB);
