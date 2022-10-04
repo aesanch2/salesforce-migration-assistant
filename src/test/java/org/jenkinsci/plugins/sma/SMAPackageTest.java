@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,9 +25,7 @@ public class SMAPackageTest
     public void setUp() throws Exception
     {
         //Setup the fake workspace and package manifest
-        testWorkspace = File.createTempFile("TestWorkspace", "");
-        testWorkspace.delete();
-        testWorkspace.mkdirs();
+        testWorkspace = Files.createTempDirectory("TestWorkspace").toFile();
         testWorkspacePath = testWorkspace.getPath();
 
         String emptyString = "";
