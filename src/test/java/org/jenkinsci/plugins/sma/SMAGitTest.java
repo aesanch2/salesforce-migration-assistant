@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +42,7 @@ public class SMAGitTest
     public void setUp() throws Exception
     {
         //Setup the fake repository
-        localPath = File.createTempFile("TestGitRepository", "");
+        localPath = Files.createTempFile("TestGitRepository", "").toFile();
         localPath.delete();
         repository = FileRepositoryBuilder.create(new File(localPath, ".git"));
         repository.create();
